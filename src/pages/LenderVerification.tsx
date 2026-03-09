@@ -4,6 +4,7 @@ import { Copy, ExternalLink, ChevronDown, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ShieldProof, ProofValid, AlgorandChain } from "@/components/ProofMarks";
 import { useToast } from "@/hooks/use-toast";
+import { ACRE_EASE, ACRE_MICRO, ACRE_LAYOUT } from "@/components/motion/AcreMotion";
 
 type VerificationState = "validating" | "valid" | "invalid" | "expired";
 
@@ -52,7 +53,7 @@ const LenderVerification = () => {
       i++;
       setLitRows(i);
       if (i >= total) clearInterval(iv);
-    }, 180);
+    }, 150); // Matches ACRE_MICRO (150ms)
     return () => clearInterval(iv);
   }, [state]);
 
@@ -106,7 +107,7 @@ const LenderVerification = () => {
           <div className="flex items-center gap-4">
             <div className="w-16 h-16 flex items-center justify-center">
               {isPending && (
-                <motion.div animate={{ opacity: [0.4, 1, 0.4] }} transition={{ duration: 1, repeat: Infinity }}>
+                <motion.div animate={{ opacity: [0.4, 1, 0.4] }} transition={{ duration: 1, repeat: Infinity, ease: ACRE_EASE }}>
                   <ShieldProof size={48} state="scanning" />
                 </motion.div>
               )}
@@ -130,28 +131,28 @@ const LenderVerification = () => {
               className="absolute left-8 bottom-0 w-px bg-secondary"
               initial={{ height: 0 }}
               animate={{ height: "100%" }}
-              transition={{ duration: 0.6, delay: 0.2 }}
+              transition={{ duration: ACRE_LAYOUT, delay: 0.2, ease: ACRE_EASE }}
               style={{ filter: "drop-shadow(0 0 4px hsl(var(--secondary)))" }}
             />
           )}
           {isInvalid && (
             <svg className="absolute inset-0 w-full h-full pointer-events-none">
               <motion.line x1="0" y1="0" x2="100%" y2="100%" stroke="hsl(var(--destructive))" strokeWidth="1"
-                initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ duration: 0.4 }} />
+                initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ duration: ACRE_LAYOUT, ease: ACRE_EASE }} />
               <motion.line x1="100%" y1="0" x2="0" y2="100%" stroke="hsl(var(--destructive))" strokeWidth="1"
-                initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ duration: 0.4, delay: 0.1 }} />
+                initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ duration: ACRE_LAYOUT, delay: 0.1, ease: ACRE_EASE }} />
             </svg>
           )}
         </div>
 
         {/* Proof Hash */}
-        <div className={`border border-border p-4 mb-6 transition-opacity duration-300 ${isInvalid ? "opacity-30" : ""}`}>
+        <div className={`border border-border p-4 mb-6 transition-opacity duration-layout ease-acre ${isInvalid ? "opacity-30" : ""}`}>
           <span className="text-xs text-muted-foreground tracking-widest uppercase block mb-2">Proof Hash</span>
           <div className="flex items-center gap-2">
             <code className="mono-data text-sm text-foreground break-all flex-1">
               {MOCK_PROOF.hash}
             </code>
-            <button onClick={copyHash} className="text-muted-foreground hover:text-foreground transition-colors p-1">
+            <button onClick={copyHash} className="text-muted-foreground hover:text-secondary acre-link transition-colors duration-micro ease-acre p-1">
               <Copy size={14} />
             </button>
             <a href={`https://testnet.algoexplorer.io/tx/${MOCK_PROOF.hash}`} target="_blank" rel="noopener noreferrer"
@@ -213,18 +214,18 @@ const LenderVerification = () => {
         {/* Actions */}
         <div className="mt-auto pt-8 space-y-3">
           <Button
-            className="w-full h-12 rounded-none bg-secondary text-secondary-foreground font-heading tracking-widest uppercase hover:bg-secondary/90"
+            className="w-full h-12 rounded-none bg-secondary text-secondary-foreground font-heading tracking-widest uppercase hover:bg-secondary/90 cursor-crosshair transition-all duration-micro ease-acre"
             disabled={!isValid}
           >
             Issue Credit
           </Button>
           <Button
             variant="outline"
-            className="w-full h-10 rounded-none border-primary text-primary font-heading tracking-widest uppercase hover:bg-primary/10"
+            className="w-full h-10 rounded-none border-primary text-primary font-heading tracking-widest uppercase hover:bg-primary/10 cursor-crosshair transition-all duration-micro ease-acre"
           >
             Request More Proof
           </Button>
-          <button className="w-full text-center text-xs text-muted-foreground hover:text-destructive transition-colors font-heading tracking-widest uppercase py-2">
+          <button className="w-full text-center text-xs text-muted-foreground hover:text-destructive transition-colors duration-micro ease-acre font-heading tracking-widest uppercase py-2 cursor-crosshair">
             Flag Suspicious
           </button>
         </div>
@@ -237,19 +238,20 @@ const LenderVerification = () => {
 
 const DataRow = ({ label, children, lit, invalid }: { label: string; children: React.ReactNode; lit: boolean; invalid: boolean }) => (
   <motion.div
-    className={`border border-border p-4 transition-all duration-300 ${invalid ? "opacity-30" : ""}`}
+    className={`border border-border p-4 acre-card transition-all duration-layout ease-acre ${invalid ? "opacity-30" : ""}`}
     animate={lit ? { borderColor: "hsl(187 94% 43% / 0.4)" } : {}}
-    transition={{ duration: 0.3 }}
+    transition={{ duration: ACRE_LAYOUT, ease: ACRE_EASE }}
   >
     <span className="text-xs text-muted-foreground tracking-widest block mb-1">{label}</span>
     <div className="flex items-center justify-between">
       {children}
       {lit && (
         <motion.div
-          initial={{ scale: 0 }}
-          animate={{ scale: 1 }}
-          className="w-2 h-2 rounded-full bg-secondary"
+          initial={{ scale: 0, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          className="w-2 h-2 bg-secondary"
           style={{ boxShadow: "0 0 6px hsl(var(--secondary))" }}
+          transition={{ duration: ACRE_MICRO, ease: ACRE_EASE }}
         />
       )}
     </div>
@@ -262,7 +264,7 @@ const CryptoDetails = ({ proof, isInvalid }: { proof: typeof MOCK_PROOF; isInval
     <div className={`border border-border transition-opacity duration-300 ${isInvalid ? "opacity-30" : ""}`}>
       <button onClick={() => setOpen(!open)} className="w-full flex items-center justify-between p-4 text-left">
         <span className="text-xs font-heading tracking-widest text-muted-foreground uppercase">Cryptographic Details</span>
-        <ChevronDown size={14} className={`text-muted-foreground transition-transform ${open ? "rotate-180" : ""}`} />
+        <ChevronDown size={14} className={`text-muted-foreground transition-transform duration-micro ease-acre ${open ? "rotate-180" : ""}`} />
       </button>
       <AnimatePresence>
         {open && (
@@ -270,7 +272,7 @@ const CryptoDetails = ({ proof, isInvalid }: { proof: typeof MOCK_PROOF; isInval
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: "auto", opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.2 }}
+            transition={{ duration: ACRE_LAYOUT, ease: ACRE_EASE }}
             className="overflow-hidden"
           >
             <div className="px-4 pb-4 space-y-3 border-t border-border pt-3">

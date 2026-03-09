@@ -213,7 +213,7 @@ const LenderVerification = () => {
         {/* Actions */}
         <div className="mt-auto pt-8 space-y-3">
           <Button
-            className="w-full h-12 rounded-none bg-secondary text-secondary-foreground font-heading tracking-widest uppercase hover:bg-secondary/90"
+            className="w-full h-12 rounded-none bg-secondary text-secondary-foreground font-heading tracking-widest uppercase hover:bg-secondary/90 cursor-crosshair transition-all duration-micro ease-acre"
             disabled={!isValid}
           >
             Issue Credit

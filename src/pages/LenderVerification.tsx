@@ -271,7 +271,7 @@ const CryptoDetails = ({ proof, isInvalid }: { proof: typeof MOCK_PROOF; isInval
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: "auto", opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.2 }}
+            transition={{ duration: ACRE_LAYOUT, ease: ACRE_EASE }}
             className="overflow-hidden"
           >
             <div className="px-4 pb-4 space-y-3 border-t border-border pt-3">

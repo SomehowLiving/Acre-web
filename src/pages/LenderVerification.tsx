@@ -4,6 +4,7 @@ import { Copy, ExternalLink, ChevronDown, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ShieldProof, ProofValid, AlgorandChain } from "@/components/ProofMarks";
 import { useToast } from "@/hooks/use-toast";
+import { ACRE_EASE, ACRE_MICRO, ACRE_LAYOUT } from "@/components/motion/AcreMotion";
 
 type VerificationState = "validating" | "valid" | "invalid" | "expired";
 

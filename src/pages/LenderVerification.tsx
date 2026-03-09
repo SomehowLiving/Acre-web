@@ -145,7 +145,7 @@ const LenderVerification = () => {
         </div>
 
         {/* Proof Hash */}
-        <div className={`border border-border p-4 mb-6 transition-opacity duration-300 ${isInvalid ? "opacity-30" : ""}`}>
+        <div className={`border border-border p-4 mb-6 transition-opacity duration-layout ease-acre ${isInvalid ? "opacity-30" : ""}`}>
           <span className="text-xs text-muted-foreground tracking-widest uppercase block mb-2">Proof Hash</span>
           <div className="flex items-center gap-2">
             <code className="mono-data text-sm text-foreground break-all flex-1">

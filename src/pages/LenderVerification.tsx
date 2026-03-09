@@ -263,7 +263,7 @@ const CryptoDetails = ({ proof, isInvalid }: { proof: typeof MOCK_PROOF; isInval
     <div className={`border border-border transition-opacity duration-300 ${isInvalid ? "opacity-30" : ""}`}>
       <button onClick={() => setOpen(!open)} className="w-full flex items-center justify-between p-4 text-left">
         <span className="text-xs font-heading tracking-widest text-muted-foreground uppercase">Cryptographic Details</span>
-        <ChevronDown size={14} className={`text-muted-foreground transition-transform ${open ? "rotate-180" : ""}`} />
+        <ChevronDown size={14} className={`text-muted-foreground transition-transform duration-micro ease-acre ${open ? "rotate-180" : ""}`} />
       </button>
       <AnimatePresence>
         {open && (

@@ -106,7 +106,7 @@ const LenderVerification = () => {
           <div className="flex items-center gap-4">
             <div className="w-16 h-16 flex items-center justify-center">
               {isPending && (
-                <motion.div animate={{ opacity: [0.4, 1, 0.4] }} transition={{ duration: 1, repeat: Infinity }}>
+                <motion.div animate={{ opacity: [0.4, 1, 0.4] }} transition={{ duration: 1, repeat: Infinity, ease: ACRE_EASE }}>
                   <ShieldProof size={48} state="scanning" />
                 </motion.div>
               )}

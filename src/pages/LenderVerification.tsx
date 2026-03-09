@@ -220,7 +220,7 @@ const LenderVerification = () => {
           </Button>
           <Button
             variant="outline"
-            className="w-full h-10 rounded-none border-primary text-primary font-heading tracking-widest uppercase hover:bg-primary/10"
+            className="w-full h-10 rounded-none border-primary text-primary font-heading tracking-widest uppercase hover:bg-primary/10 cursor-crosshair transition-all duration-micro ease-acre"
           >
             Request More Proof
           </Button>

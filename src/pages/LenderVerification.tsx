@@ -137,9 +137,9 @@ const LenderVerification = () => {
           {isInvalid && (
             <svg className="absolute inset-0 w-full h-full pointer-events-none">
               <motion.line x1="0" y1="0" x2="100%" y2="100%" stroke="hsl(var(--destructive))" strokeWidth="1"
-                initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ duration: 0.4 }} />
+                initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ duration: ACRE_LAYOUT, ease: ACRE_EASE }} />
               <motion.line x1="100%" y1="0" x2="0" y2="100%" stroke="hsl(var(--destructive))" strokeWidth="1"
-                initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ duration: 0.4, delay: 0.1 }} />
+                initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ duration: ACRE_LAYOUT, delay: 0.1, ease: ACRE_EASE }} />
             </svg>
           )}
         </div>

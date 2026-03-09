@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { ReactNode } from "react";
-import { ACRE_EASE, ACRE_PAGE } from "./AcreMotion";
+import { ACRE_EASE } from "./motion/AcreMotion";
 
 interface ScrollRevealProps {
   children: ReactNode;

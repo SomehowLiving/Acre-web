@@ -1,7 +1,7 @@
 import { motion } from "framer-motion";
 
 const CreditTierIndicator = () => {
-  const currentTier = 2; // 1=triangle, 2=square, 3=hexagon
+  const currentTier = 2 as 1 | 2 | 3;
   const progressToNext = 0.65; // 65% to next tier
 
   const tierLabel = currentTier === 1 ? "TIER 1" : currentTier === 2 ? "TIER 2" : "TIER 3";

@@ -5,7 +5,7 @@ const TOTAL_DOTS = 60;
 
 const ProofStatusModule = () => {
   const [filledDots, setFilledDots] = useState(0);
-  const proofState: "GENERATING" | "VERIFIED" | "EXPIRED" = "VERIFIED";
+  const proofState = "VERIFIED" as "GENERATING" | "VERIFIED" | "EXPIRED";
   const daysUntilExpiry = 14;
 
   // Animate dots filling on mount

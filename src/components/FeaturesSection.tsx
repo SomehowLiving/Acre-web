@@ -6,6 +6,7 @@ import {
   GigWorker,
   DataMinimal,
 } from "./ProofMarks";
+import ScrollReveal from "./ScrollReveal";
 
 const features = [
   {
@@ -56,7 +57,7 @@ const FeaturesSection = () => {
   return (
     <section id="features" className="relative py-24 border-t border-border">
       <div className="container mx-auto px-6">
-        <div className="mb-16">
+        <ScrollReveal className="mb-16">
           <div className="flex items-center gap-3 mb-4">
             <div className="h-px w-8 bg-secondary" />
             <span className="mono-data text-xs text-secondary tracking-widest uppercase">
@@ -66,29 +67,28 @@ const FeaturesSection = () => {
           <h2 className="font-heading text-3xl md:text-4xl font-bold text-foreground">
             Engineered for privacy
           </h2>
-        </div>
+        </ScrollReveal>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-px bg-border">
-          {features.map((feature) => (
-            <div
-              key={feature.title}
-              className="bg-background p-8 group hover:bg-card transition-colors"
-            >
-              <div className="flex items-start justify-between mb-6">
-                <div className="group-hover:scale-110 transition-transform">
-                  {feature.icon}
+          {features.map((feature, i) => (
+            <ScrollReveal key={feature.title} delay={i * 0.08}>
+              <div className="bg-background p-8 group hover:bg-card transition-colors h-full">
+                <div className="flex items-start justify-between mb-6">
+                  <div className="group-hover:scale-110 transition-transform">
+                    {feature.icon}
+                  </div>
+                  <span className="mono-data text-[10px] text-muted-foreground border border-border px-2 py-0.5 rounded-sm">
+                    {feature.tag}
+                  </span>
                 </div>
-                <span className="mono-data text-[10px] text-muted-foreground border border-border px-2 py-0.5 rounded-sm">
-                  {feature.tag}
-                </span>
+                <h3 className="font-heading text-lg font-semibold text-foreground mb-3">
+                  {feature.title}
+                </h3>
+                <p className="font-body text-sm text-muted-foreground leading-relaxed">
+                  {feature.description}
+                </p>
               </div>
-              <h3 className="font-heading text-lg font-semibold text-foreground mb-3">
-                {feature.title}
-              </h3>
-              <p className="font-body text-sm text-muted-foreground leading-relaxed">
-                {feature.description}
-              </p>
-            </div>
+            </ScrollReveal>
           ))}
         </div>
       </div>

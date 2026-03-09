@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import { ReactNode } from "react";
+import { ACRE_EASE, ACRE_PAGE } from "./AcreMotion";
 
 interface ScrollRevealProps {
   children: ReactNode;
@@ -14,6 +15,10 @@ const directionOffsets = {
   right: { x: 40, y: 0 },
 };
 
+/**
+ * ScrollReveal — Precision Mechanics variant
+ * Uses acre easing, no spring physics
+ */
 const ScrollReveal = ({ children, className, delay = 0, direction = "up" }: ScrollRevealProps) => {
   const offset = directionOffsets[direction];
 
@@ -23,7 +28,7 @@ const ScrollReveal = ({ children, className, delay = 0, direction = "up" }: Scro
       initial={{ opacity: 0, ...offset }}
       whileInView={{ opacity: 1, x: 0, y: 0 }}
       viewport={{ once: true, margin: "-80px" }}
-      transition={{ duration: 0.6, delay, ease: [0.25, 0.1, 0.25, 1] }}
+      transition={{ duration: 0.6, delay, ease: ACRE_EASE }}
     >
       {children}
     </motion.div>

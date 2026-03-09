@@ -237,19 +237,20 @@ const LenderVerification = () => {
 
 const DataRow = ({ label, children, lit, invalid }: { label: string; children: React.ReactNode; lit: boolean; invalid: boolean }) => (
   <motion.div
-    className={`border border-border p-4 transition-all duration-300 ${invalid ? "opacity-30" : ""}`}
+    className={`border border-border p-4 acre-card transition-all duration-layout ease-acre ${invalid ? "opacity-30" : ""}`}
     animate={lit ? { borderColor: "hsl(187 94% 43% / 0.4)" } : {}}
-    transition={{ duration: 0.3 }}
+    transition={{ duration: ACRE_LAYOUT, ease: ACRE_EASE }}
   >
     <span className="text-xs text-muted-foreground tracking-widest block mb-1">{label}</span>
     <div className="flex items-center justify-between">
       {children}
       {lit && (
         <motion.div
-          initial={{ scale: 0 }}
-          animate={{ scale: 1 }}
-          className="w-2 h-2 rounded-full bg-secondary"
+          initial={{ scale: 0, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          className="w-2 h-2 bg-secondary"
           style={{ boxShadow: "0 0 6px hsl(var(--secondary))" }}
+          transition={{ duration: ACRE_MICRO, ease: ACRE_EASE }}
         />
       )}
     </div>

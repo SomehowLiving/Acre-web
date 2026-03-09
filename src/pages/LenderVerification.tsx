@@ -224,7 +224,7 @@ const LenderVerification = () => {
           >
             Request More Proof
           </Button>
-          <button className="w-full text-center text-xs text-muted-foreground hover:text-destructive transition-colors font-heading tracking-widest uppercase py-2">
+          <button className="w-full text-center text-xs text-muted-foreground hover:text-destructive transition-colors duration-micro ease-acre font-heading tracking-widest uppercase py-2 cursor-crosshair">
             Flag Suspicious
           </button>
         </div>

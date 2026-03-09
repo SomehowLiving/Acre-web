@@ -22,6 +22,7 @@ const App = () => (
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/dashboard/*" element={<Dashboard />} />
           <Route path="/generate" element={<GenerateProof />} />
+          <Route path="/verify" element={<LenderVerification />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

@@ -130,7 +130,7 @@ const LenderVerification = () => {
               className="absolute left-8 bottom-0 w-px bg-secondary"
               initial={{ height: 0 }}
               animate={{ height: "100%" }}
-              transition={{ duration: 0.6, delay: 0.2 }}
+              transition={{ duration: ACRE_LAYOUT, delay: 0.2, ease: ACRE_EASE }}
               style={{ filter: "drop-shadow(0 0 4px hsl(var(--secondary)))" }}
             />
           )}

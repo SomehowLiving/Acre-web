@@ -151,7 +151,7 @@ const LenderVerification = () => {
             <code className="mono-data text-sm text-foreground break-all flex-1">
               {MOCK_PROOF.hash}
             </code>
-            <button onClick={copyHash} className="text-muted-foreground hover:text-foreground transition-colors p-1">
+            <button onClick={copyHash} className="text-muted-foreground hover:text-secondary acre-link transition-colors duration-micro ease-acre p-1">
               <Copy size={14} />
             </button>
             <a href={`https://testnet.algoexplorer.io/tx/${MOCK_PROOF.hash}`} target="_blank" rel="noopener noreferrer"

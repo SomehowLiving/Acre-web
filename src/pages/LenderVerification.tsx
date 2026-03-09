@@ -52,7 +52,7 @@ const LenderVerification = () => {
       i++;
       setLitRows(i);
       if (i >= total) clearInterval(iv);
-    }, 180);
+    }, 150); // Matches ACRE_MICRO (150ms)
     return () => clearInterval(iv);
   }, [state]);
 

@@ -126,12 +126,3 @@ export async function fetchEligibility(address: string): Promise<number> {
     return 0;
   }
 }
-  try {
-    const base = getBaseUrl();
-    const res = await fetch(`${base}/api/user/${address}/eligibility`);
-    const body = await res.json();
-    return Number(body.eligibility || 0);
-  } catch {
-    return 0;
-  }
-}

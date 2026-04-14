@@ -8,13 +8,11 @@ interface Proof {
   status: "verified" | "pending" | "expired";
 }
 
-const proofs: Proof[] = [
-  { id: "1", hash: "0x8f3a...c7d1", timestamp: "2026-03-09 14:23", status: "verified" },
-  { id: "2", hash: "0x2b91...a4e8", timestamp: "2026-03-08 09:11", status: "verified" },
-  { id: "3", hash: "0xd47f...1b3c", timestamp: "2026-03-05 18:47", status: "pending" },
-  { id: "4", hash: "0x6e02...f9a5", timestamp: "2026-02-28 12:00", status: "expired" },
-  { id: "5", hash: "0xa1c8...3d7e", timestamp: "2026-02-20 08:33", status: "verified" },
-];
+interface RecentProofsListProps {
+  proofHash?: string;
+  verified?: boolean;
+  timestamp?: string;
+}
 
 const statusStyles: Record<string, string> = {
   verified: "text-secondary",
@@ -28,11 +26,29 @@ const statusDotStyles: Record<string, string> = {
   expired: "bg-muted-foreground",
 };
 
-const RecentProofsList = () => {
+const RecentProofsList = ({ proofHash, verified, timestamp }: RecentProofsListProps) => {
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
+  // Build proofs list from backend data
+  const proofs: Proof[] = [];
+  if (proofHash && proofHash.length > 0) {
+    const displayHash = proofHash.length > 16
+      ? `0x${proofHash.slice(0, 4)}...${proofHash.slice(-4)}`
+      : proofHash;
+    const ts = timestamp
+      ? new Date(Number(timestamp) * 1000).toISOString().replace("T", " ").slice(0, 16)
+      : new Date().toISOString().replace("T", " ").slice(0, 16);
+    proofs.push({
+      id: "1",
+      hash: displayHash,
+      timestamp: ts,
+      status: verified ? "verified" : "expired",
+    });
+  }
+
   const copyHash = (hash: string) => {
-    navigator.clipboard.writeText(hash);
+    const fullHash = proofHash || hash;
+    navigator.clipboard.writeText(fullHash);
   };
 
   return (
@@ -42,6 +58,11 @@ const RecentProofsList = () => {
       </span>
 
       <div className="flex-1 overflow-y-auto space-y-[1px]">
+        {proofs.length === 0 && (
+          <div className="flex items-center justify-center h-full">
+            <span className="text-xs text-muted-foreground mono-data">No proofs found</span>
+          </div>
+        )}
         {proofs.map((proof) => (
           <div key={proof.id}>
             <button

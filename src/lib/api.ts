@@ -94,7 +94,38 @@ export async function fetchProofHash(address: string): Promise<string> {
   }
 }
 
+export async function fetchVerifiedStatus(address: string): Promise<boolean> {
+  try {
+    const base = getBaseUrl();
+    const res = await fetch(`${base}/api/user/${address}/verified`);
+    const body = await res.json();
+    return Boolean(body.verified);
+  } catch {
+    return false;
+  }
+}
+
+export async function fetchCreditLimit(address: string): Promise<number> {
+  try {
+    const base = getBaseUrl();
+    const res = await fetch(`${base}/api/user/${address}/credit-limit`);
+    const body = await res.json();
+    return Number(body.creditLimit || 0);
+  } catch {
+    return 0;
+  }
+}
+
 export async function fetchEligibility(address: string): Promise<number> {
+  try {
+    const base = getBaseUrl();
+    const res = await fetch(`${base}/api/user/${address}/eligibility`);
+    const body = await res.json();
+    return Number(body.eligibility || 0);
+  } catch {
+    return 0;
+  }
+}
   try {
     const base = getBaseUrl();
     const res = await fetch(`${base}/api/user/${address}/eligibility`);

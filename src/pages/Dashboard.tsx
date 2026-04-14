@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import DashboardSidebar from "@/components/dashboard/DashboardSidebar";
 import DashboardTopBar from "@/components/dashboard/DashboardTopBar";
 import ProofStatusModule from "@/components/dashboard/ProofStatusModule";
@@ -5,8 +6,48 @@ import IncomeAttestationGraph from "@/components/dashboard/IncomeAttestationGrap
 import CreditTierIndicator from "@/components/dashboard/CreditTierIndicator";
 import RecentProofsList from "@/components/dashboard/RecentProofsList";
 import { motion } from "framer-motion";
+import { useWallet } from "@/contexts/WalletContext";
+import {
+  fetchUserProfile,
+  fetchProofCount,
+  fetchAdminAddress,
+  fetchVerifierAddress,
+  fetchProofHash,
+  type UserProfile,
+} from "@/lib/api";
 
 const Dashboard = () => {
+  const { account } = useWallet();
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [proofCount, setProofCount] = useState<number>(0);
+  const [adminAddr, setAdminAddr] = useState("");
+  const [verifierAddr, setVerifierAddr] = useState("");
+  const [proofHash, setProofHash] = useState("");
+
+  useEffect(() => {
+    fetchProofCount().then(setProofCount).catch(() => {});
+    fetchAdminAddress().then(setAdminAddr).catch(() => {});
+    fetchVerifierAddress().then(setVerifierAddr).catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    if (!account) {
+      setProfile(null);
+      setProofHash("");
+      return;
+    }
+    fetchUserProfile(account).then(setProfile).catch(() => {});
+    fetchProofHash(account).then(setProofHash).catch(() => {});
+  }, [account]);
+
+  const tier = profile ? Number(profile.tier) : 0;
+  const creditLimit = profile ? Number(profile.creditLimit) : 0;
+  const riderCount = profile ? Number(profile.riderCount) : 0;
+  const riderRating = profile ? Number(profile.riderRating) : 0;
+  const verified = profile?.verified;
+  const platform = profile?.platform || "";
+  const timestamp = profile?.timestamp || "";
+
   return (
     <div className="min-h-screen bg-background flex">
       <DashboardSidebar />
@@ -17,20 +58,28 @@ const Dashboard = () => {
           <div className="grid grid-cols-4 grid-rows-[auto] gap-[1px] bg-border/30">
             {/* Proof Status: 2x2 */}
             <BentoCell className="col-span-2 row-span-2" delay={0}>
-              <ProofStatusModule />
+              <ProofStatusModule
+                verified={verified}
+                platform={platform}
+                creditLimit={creditLimit}
+              />
             </BentoCell>
 
             {/* Credit Tier: 1x1 */}
             <BentoCell className="col-span-1 row-span-1" delay={0.1}>
-              <CreditTierIndicator />
+              <CreditTierIndicator tier={tier} creditLimit={creditLimit} />
             </BentoCell>
 
             {/* Recent Proofs: 1x2 tall */}
             <BentoCell className="col-span-1 row-span-2" delay={0.15}>
-              <RecentProofsList />
+              <RecentProofsList
+                proofHash={proofHash}
+                verified={verified}
+                timestamp={timestamp}
+              />
             </BentoCell>
 
-            {/* Income Attestation: 2x1 wide + credit tier filler */}
+            {/* Network cell */}
             <BentoCell className="col-span-1 row-span-1" delay={0.2}>
               <div className="h-full flex flex-col items-center justify-center p-6">
                 <span className="text-xs font-heading text-muted-foreground tracking-widest uppercase mb-2">Network</span>
@@ -39,12 +88,16 @@ const Dashboard = () => {
                 <div className="mt-4 w-full h-[1px] bg-border" />
                 <div className="mt-4 grid grid-cols-2 gap-4 w-full text-center">
                   <div>
-                    <span className="text-xs text-muted-foreground">Block</span>
-                    <p className="text-sm font-heading text-foreground mono-data">34,291,047</p>
+                    <span className="text-xs text-muted-foreground">Admin</span>
+                    <p className="text-[10px] font-heading text-foreground mono-data truncate" title={adminAddr}>
+                      {adminAddr ? `${adminAddr.slice(0, 6)}...${adminAddr.slice(-4)}` : "—"}
+                    </p>
                   </div>
                   <div>
-                    <span className="text-xs text-muted-foreground">Round</span>
-                    <p className="text-sm font-heading text-foreground mono-data">34,291,048</p>
+                    <span className="text-xs text-muted-foreground">Verifier</span>
+                    <p className="text-[10px] font-heading text-foreground mono-data truncate" title={verifierAddr}>
+                      {verifierAddr ? `${verifierAddr.slice(0, 6)}...${verifierAddr.slice(-4)}` : "—"}
+                    </p>
                   </div>
                 </div>
               </div>
@@ -55,22 +108,22 @@ const Dashboard = () => {
               <IncomeAttestationGraph />
             </BentoCell>
 
-            {/* Empty info cell */}
+            {/* Protocol Stats cell */}
             <BentoCell className="col-span-2 row-span-1" delay={0.3}>
               <div className="h-full flex flex-col justify-center p-6">
                 <span className="text-xs font-heading text-muted-foreground tracking-widest uppercase mb-3">Protocol Stats</span>
                 <div className="grid grid-cols-3 gap-6">
                   <div>
-                    <p className="text-2xl font-heading text-foreground mono-data">1,247</p>
+                    <p className="text-2xl font-heading text-foreground mono-data">{proofCount.toLocaleString()}</p>
                     <span className="text-xs text-muted-foreground">Total Proofs</span>
                   </div>
                   <div>
-                    <p className="text-2xl font-heading text-secondary mono-data">99.2%</p>
-                    <span className="text-xs text-muted-foreground">Verification Rate</span>
+                    <p className="text-2xl font-heading text-secondary mono-data">{riderCount.toLocaleString()}</p>
+                    <span className="text-xs text-muted-foreground">Rider Count</span>
                   </div>
                   <div>
-                    <p className="text-2xl font-heading text-foreground mono-data">0.003s</p>
-                    <span className="text-xs text-muted-foreground">Avg Proof Time</span>
+                    <p className="text-2xl font-heading text-foreground mono-data">{riderRating ? (riderRating / 100).toFixed(2) : "—"}</p>
+                    <span className="text-xs text-muted-foreground">Rider Rating</span>
                   </div>
                 </div>
               </div>

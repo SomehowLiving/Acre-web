@@ -3,14 +3,20 @@ import { useState, useEffect } from "react";
 
 const TOTAL_DOTS = 60;
 
-const ProofStatusModule = () => {
+interface ProofStatusModuleProps {
+  verified?: boolean;
+  platform?: string;
+  creditLimit?: number;
+}
+
+const ProofStatusModule = ({ verified, platform, creditLimit }: ProofStatusModuleProps) => {
   const [filledDots, setFilledDots] = useState(0);
-  const proofState = "VERIFIED" as "GENERATING" | "VERIFIED" | "EXPIRED";
-  const daysUntilExpiry = 14;
+  const proofState = verified === undefined ? "GENERATING" : verified ? "VERIFIED" : "EXPIRED";
 
   // Animate dots filling on mount
   useEffect(() => {
     const target = proofState === "VERIFIED" ? TOTAL_DOTS : proofState === "GENERATING" ? 38 : 0;
+    setFilledDots(0);
     const interval = setInterval(() => {
       setFilledDots((prev) => {
         if (prev >= target) {
@@ -35,6 +41,8 @@ const ProofStatusModule = () => {
     if (proofState === "GENERATING") return "bg-warning";
     return "bg-muted-foreground";
   };
+
+  const displayLimit = creditLimit != null ? `₹${Number(creditLimit).toLocaleString()}` : "—";
 
   return (
     <div className="h-full flex flex-col items-center justify-center p-8">
@@ -68,14 +76,14 @@ const ProofStatusModule = () => {
         {/* Center content */}
         <div className="absolute inset-0 flex flex-col items-center justify-center">
           <motion.span
-            className="text-4xl font-heading text-foreground mono-data"
+            className="text-3xl font-heading text-foreground mono-data"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.5 }}
           >
-            {daysUntilExpiry}
+            {displayLimit}
           </motion.span>
-          <span className="text-xs text-muted-foreground mt-1">days remaining</span>
+          <span className="text-xs text-muted-foreground mt-1">credit limit</span>
         </div>
       </div>
 
@@ -88,6 +96,13 @@ const ProofStatusModule = () => {
         <div className={`w-2 h-2 ${proofState === "VERIFIED" ? "bg-secondary" : proofState === "GENERATING" ? "bg-warning" : "bg-muted-foreground"}`} />
         <span className="text-sm font-heading tracking-widest">{proofState}</span>
       </motion.div>
+
+      {/* Platform label */}
+      {platform && (
+        <span className="mt-2 text-xs text-muted-foreground mono-data tracking-widest uppercase">
+          {platform}
+        </span>
+      )}
 
       {/* Renew command */}
       {proofState !== "GENERATING" && (

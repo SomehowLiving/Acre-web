@@ -1,10 +1,16 @@
 import { motion } from "framer-motion";
 
-const CreditTierIndicator = () => {
-  const currentTier = 2 as 1 | 2 | 3;
-  const progressToNext = 0.65; // 65% to next tier
+interface CreditTierIndicatorProps {
+  tier?: number;
+  creditLimit?: number;
+}
+
+const CreditTierIndicator = ({ tier, creditLimit }: CreditTierIndicatorProps) => {
+  const currentTier = (tier || 1) as 1 | 2 | 3;
+  const progressToNext = currentTier === 3 ? 1 : currentTier === 2 ? 0.65 : 0.3;
 
   const tierLabel = currentTier === 1 ? "TIER 1" : currentTier === 2 ? "TIER 2" : "TIER 3";
+  const nextTierLabel = currentTier >= 3 ? "MAX" : `Tier ${currentTier + 1}`;
 
   return (
     <div className="h-full flex flex-col items-center justify-center p-6">
@@ -43,7 +49,12 @@ const CreditTierIndicator = () => {
       </div>
 
       <span className="text-sm font-heading text-foreground tracking-widest">{tierLabel}</span>
-      <span className="text-xs text-muted-foreground mt-1 mono-data">{Math.round(progressToNext * 100)}% → Tier 3</span>
+      <span className="text-xs text-muted-foreground mt-1 mono-data">
+        {currentTier >= 3 ? "MAX TIER" : `${Math.round(progressToNext * 100)}% → ${nextTierLabel}`}
+      </span>
+      {creditLimit != null && (
+        <span className="text-xs text-secondary mt-2 mono-data">₹{Number(creditLimit).toLocaleString()}</span>
+      )}
     </div>
   );
 };

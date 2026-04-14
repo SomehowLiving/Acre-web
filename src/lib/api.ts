@@ -60,3 +60,47 @@ export async function fetchProofCount(): Promise<number> {
     return 0;
   }
 }
+
+export async function fetchAdminAddress(): Promise<string> {
+  try {
+    const base = getBaseUrl();
+    const res = await fetch(`${base}/api/admin`);
+    const body = await res.json();
+    return body.admin || "";
+  } catch {
+    return "";
+  }
+}
+
+export async function fetchVerifierAddress(): Promise<string> {
+  try {
+    const base = getBaseUrl();
+    const res = await fetch(`${base}/api/verifier`);
+    const body = await res.json();
+    return body.verifier || "";
+  } catch {
+    return "";
+  }
+}
+
+export async function fetchProofHash(address: string): Promise<string> {
+  try {
+    const base = getBaseUrl();
+    const res = await fetch(`${base}/api/user/${address}/proof-hash`);
+    const body = await res.json();
+    return body.proofHash || "";
+  } catch {
+    return "";
+  }
+}
+
+export async function fetchEligibility(address: string): Promise<number> {
+  try {
+    const base = getBaseUrl();
+    const res = await fetch(`${base}/api/user/${address}/eligibility`);
+    const body = await res.json();
+    return Number(body.eligibility || 0);
+  } catch {
+    return 0;
+  }
+}

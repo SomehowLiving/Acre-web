@@ -14,8 +14,6 @@ export const ProofPreview: React.FC<ProofPreviewProps> = ({
   onBack,
 }) => {
   const [expandedSections, setExpandedSections] = useState<string[]>(["public"]);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isSubmitted, setIsSubmitted] = useState(false);
 
   const toggleSection = (section: string) => {
     setExpandedSections((prev) =>
@@ -33,16 +31,8 @@ export const ProofPreview: React.FC<ProofPreviewProps> = ({
     });
   };
 
-  const handleSubmit = async () => {
-    setIsSubmitting(true);
-    await new Promise(r => setTimeout(r, 2000));
-    setIsSubmitting(false);
-    setIsSubmitted(true);
-    toast({
-      title: "Proof Submitted",
-      description: "Your proof has been anchored to the Algorand testnet",
-    });
-  };
+  // Already submitted if we have a txId from backend
+  const isSubmitted = !!proofData.txId;
 
   return (
     <div className="space-y-8">
@@ -64,6 +54,41 @@ export const ProofPreview: React.FC<ProofPreviewProps> = ({
           </div>
         </div>
       </div>
+
+      {/* Verification Result (from backend) */}
+      {(proofData.tier !== undefined || proofData.creditLimit !== undefined) && (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="p-6 border border-secondary/50 bg-secondary/5"
+        >
+          <div className="flex items-center gap-2 mb-4">
+            <AlgorandChain size={18} state="success" />
+            <span className="font-heading text-sm tracking-wide text-secondary">VERIFICATION RESULT</span>
+          </div>
+          <div className="grid grid-cols-3 gap-4 text-sm">
+            <div>
+              <div className="text-xs text-muted-foreground mb-1">TIER</div>
+              <div className="font-heading text-lg text-foreground mono-data">{proofData.tier}</div>
+            </div>
+            <div>
+              <div className="text-xs text-muted-foreground mb-1">CREDIT LIMIT</div>
+              <div className="font-heading text-lg text-foreground mono-data">
+                ₹{proofData.creditLimit?.toLocaleString("en-IN")}
+              </div>
+            </div>
+            <div>
+              <div className="text-xs text-muted-foreground mb-1">TX ID</div>
+              <button
+                onClick={() => proofData.txId && copyToClipboard(proofData.txId, "Transaction ID")}
+                className="font-mono text-xs text-primary hover:underline break-all text-left"
+              >
+                {proofData.txId ? `${proofData.txId.slice(0, 16)}...` : "-"}
+              </button>
+            </div>
+          </div>
+        </motion.div>
+      )}
 
       {/* Proof Hash */}
       <motion.div
@@ -254,32 +279,13 @@ export const ProofPreview: React.FC<ProofPreviewProps> = ({
             </span>
           </div>
         ) : (
-          <button
-            onClick={handleSubmit}
-            disabled={isSubmitting}
-            className={`px-6 py-2 font-heading text-sm tracking-wider transition-all flex items-center gap-2 ${
-              isSubmitting
-                ? "bg-muted text-muted-foreground"
-                : "bg-primary text-primary-foreground hover:bg-primary/90"
-            }`}
+          <a
+            href="/dashboard"
+            className="px-6 py-2 font-heading text-sm tracking-wider bg-primary text-primary-foreground hover:bg-primary/90 transition-all flex items-center gap-2"
           >
-            {isSubmitting ? (
-              <>
-                <motion.div
-                  className="w-4 h-4 border border-muted-foreground border-t-transparent"
-                  animate={{ rotate: 360 }}
-                  transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                  style={{ borderRadius: 0 }}
-                />
-                <span>SUBMITTING...</span>
-              </>
-            ) : (
-              <>
-                <AlgorandChain size={16} />
-                <span>SUBMIT TO CHAIN</span>
-              </>
-            )}
-          </button>
+            <AlgorandChain size={16} />
+            <span>VIEW DASHBOARD</span>
+          </a>
         )}
       </div>
     </div>

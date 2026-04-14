@@ -1,6 +1,16 @@
 import { motion } from "framer-motion";
+import { useWallet, truncateAddress } from "@/contexts/WalletContext";
+import { useEffect, useState } from "react";
+import { fetchProofCount } from "@/lib/api";
 
 const DashboardTopBar = () => {
+  const { account, connectWallet, disconnectWallet } = useWallet();
+  const [proofCount, setProofCount] = useState(0);
+
+  useEffect(() => {
+    fetchProofCount().then(setProofCount).catch(() => {});
+  }, []);
+
   return (
     <header className="h-14 flex items-center justify-between px-6 border-b border-border bg-card">
       {/* Network status */}
@@ -26,16 +36,29 @@ const DashboardTopBar = () => {
         {/* Proof count */}
         <div className="flex items-center gap-2">
           <span className="text-xs text-muted-foreground font-heading tracking-widest uppercase">Proofs</span>
-          <span className="text-sm font-heading text-secondary mono-data">7</span>
+          <span className="text-sm font-heading text-secondary mono-data">{proofCount}</span>
         </div>
 
         <div className="w-[1px] h-4 bg-border" />
 
         {/* Wallet */}
-        <button className="flex items-center gap-2 px-3 py-1.5 border border-border text-xs font-heading text-foreground tracking-wide hover:bg-muted transition-colors">
-          <div className="w-2 h-2 bg-primary" />
-          <span className="mono-data">0x7a3f...e21b</span>
-        </button>
+        {account ? (
+          <button
+            onClick={disconnectWallet}
+            className="flex items-center gap-2 px-3 py-1.5 border border-border text-xs font-heading text-foreground tracking-wide hover:bg-muted transition-colors"
+          >
+            <div className="w-2 h-2 bg-primary" />
+            <span className="mono-data">{truncateAddress(account)}</span>
+          </button>
+        ) : (
+          <button
+            onClick={connectWallet}
+            className="flex items-center gap-2 px-3 py-1.5 border border-border text-xs font-heading text-foreground tracking-wide hover:bg-muted transition-colors"
+          >
+            <div className="w-2 h-2 bg-muted-foreground" />
+            <span>Connect Wallet</span>
+          </button>
+        )}
       </div>
     </header>
   );

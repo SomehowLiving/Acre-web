@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { GigWorker, IncomeStream } from "@/components/ProofMarks";
+import { QRCodeSVG } from "qrcode.react";
 
 interface DataSource {
   id: string;
@@ -22,12 +23,14 @@ interface SourceConnectionProps {
   connectedSources: string[];
   onSourceConnect: (sourceId: string) => void;
   onNext: () => void;
+  qrUrl?: string;
 }
 
 export const SourceConnection: React.FC<SourceConnectionProps> = ({
   connectedSources,
   onSourceConnect,
   onNext,
+  qrUrl,
 }) => {
   const [connectingSource, setConnectingSource] = useState<string | null>(null);
   const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>("idle");
@@ -40,31 +43,45 @@ export const SourceConnection: React.FC<SourceConnectionProps> = ({
     setConnectionStatus("handshaking");
     setPackets([]);
 
-    // Simulate TLS handshake
-    await new Promise(r => setTimeout(r, 800));
+    // Show handshake animation while real proof generation happens
     setPackets([1]);
     
-    await new Promise(r => setTimeout(r, 600));
-    setConnectionStatus("attesting");
-    setPackets([1, 2]);
-    
-    await new Promise(r => setTimeout(r, 700));
-    setPackets([1, 2, 3]);
-    
-    await new Promise(r => setTimeout(r, 500));
-    setConnectionStatus("sealing");
-    setPackets([1, 2, 3, 4]);
-    
-    await new Promise(r => setTimeout(r, 600));
-    setConnectionStatus("connected");
+    // The actual proof generation is handled by the parent (GenerateProof page)
+    // which calls onSourceConnect and triggers Reclaim SDK
     onSourceConnect(sourceId);
-    
-    setTimeout(() => {
-      setConnectingSource(null);
-      setConnectionStatus("idle");
-      setPackets([]);
-    }, 500);
   };
+
+  // Watch for when the source gets connected (parent updates connectedSources)
+  useEffect(() => {
+    if (connectingSource && connectedSources.includes(connectingSource)) {
+      setConnectionStatus("connected");
+      setTimeout(() => {
+        setConnectingSource(null);
+        setConnectionStatus("idle");
+        setPackets([]);
+      }, 500);
+    }
+  }, [connectedSources, connectingSource]);
+
+  // Animate packets while connecting
+  useEffect(() => {
+    if (!connectingSource || connectedSources.includes(connectingSource)) return;
+    
+    const interval = setInterval(() => {
+      setPackets((prev) => {
+        if (prev.length >= 4) return [1];
+        return [...prev, prev.length + 1];
+      });
+      setConnectionStatus((prev) => {
+        if (prev === "handshaking") return "attesting";
+        if (prev === "attesting") return "sealing";
+        if (prev === "sealing") return "handshaking";
+        return prev;
+      });
+    }, 1500);
+
+    return () => clearInterval(interval);
+  }, [connectingSource, connectedSources]);
 
   const SignalStrength: React.FC<{ active: boolean; connected: boolean }> = ({ active, connected }) => {
     const [filledBars, setFilledBars] = useState(0);
@@ -119,6 +136,25 @@ export const SourceConnection: React.FC<SourceConnectionProps> = ({
           Connect your income data sources via encrypted attestation channels
         </p>
       </div>
+
+      {/* QR Code for Reclaim Proof (shown when a source is being connected) */}
+      {qrUrl && connectingSource && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex flex-col items-center gap-4 p-6 border border-primary/30 bg-primary/5"
+        >
+          <div className="text-sm font-heading tracking-wider text-primary uppercase">
+            Scan QR to verify your income
+          </div>
+          <div className="bg-white p-4">
+            <QRCodeSVG value={qrUrl} size={220} />
+          </div>
+          <div className="text-xs text-muted-foreground">
+            Open this QR code with your phone to log in and verify
+          </div>
+        </motion.div>
+      )}
 
       {/* Terminal Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -183,7 +219,7 @@ export const SourceConnection: React.FC<SourceConnectionProps> = ({
                         </div>
                         {packets.map((packet, i) => (
                           <motion.div
-                            key={packet}
+                            key={`${packet}-${i}`}
                             className="absolute top-1/2 -translate-y-1/2 w-3 h-3 bg-primary"
                             initial={{ left: "0%", opacity: 0 }}
                             animate={{ left: "100%", opacity: [0, 1, 1, 0] }}

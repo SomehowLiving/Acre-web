@@ -68,14 +68,40 @@ flowchart LR
 
 ## Screenshots
 
+### 1. Product Feature Overview
+
 ![Features](demo/features.png)
+
+### 2. Protocol Flow / How Acre Works
+
 ![How It Works](demo/how-it-works.png)
+
+### 3. User Dashboard
+
 ![User Dashboard](demo/user-dashboard.png)
+
+### 4. Proof Generation Workspace
+
 ![proof generation](demo/proof-gen.png)
+
+### 5. Reclaim QR Scan Step
+
 ![qr-scan](demo/qr-scan.png)
+
+### 6. Data Source Connected (Uber)
+
 ![uber-connected](demo/uber-connected.png)
+
+### 7. Verification In Progress
+
 ![in-process](demo/in-process.png)
+
+### 8. Proof Successfully Generated
+
 ![proof-generated](demo/proof-generated.png)
+
+### 9. Lender Verification Dashboard
+
 ![verification](demo/lender-dashboard.png)
 
 ## Tech Stack

@@ -63,24 +63,32 @@ const HeroSection = () => {
             <div className="flex items-center gap-3">
               <ShieldProof size={20} state="scanning" />
               <div>
-                <div className="mono-data text-xs text-muted-foreground">ZK-SNARK</div>
-                <div className="mono-data text-sm text-foreground">Groth16</div>
+                <div className="mono-data text-xs text-muted-foreground">ZERO-KNOWLEDGE</div>
+                <div className="mono-data text-sm text-foreground">Privacy-Preserving</div>
               </div>
             </div>
             <div className="h-8 w-px bg-border" />
             <div className="flex items-center gap-3">
               <ZeroKnowledge size={20} state="scanning" />
               <div>
-                <div className="mono-data text-xs text-muted-foreground">Data Exposed</div>
-                <div className="mono-data text-sm text-foreground">0 bytes</div>
+                <div className="mono-data text-xs text-muted-foreground">Raw Data Exposed</div>
+                <div className="mono-data text-sm text-foreground">Zero</div>
               </div>
             </div>
             <div className="h-8 w-px bg-border hidden sm:block" />
             <div className="hidden sm:flex items-center gap-3">
               <ProofValid size={20} state="scanning" />
               <div>
-                <div className="mono-data text-xs text-muted-foreground">Verification</div>
+                <div className="mono-data text-xs text-muted-foreground">Proof Verification</div>
                 <div className="mono-data text-sm text-foreground">&lt;200ms</div>
+              </div>
+            </div>
+            <div className="h-8 w-px bg-border hidden sm:block" />
+            <div className="hidden sm:flex items-center gap-3">
+              <ZeroKnowledge size={20} state="scanning" />
+              <div>
+                <div className="mono-data text-xs text-muted-foreground">Attestation Size</div>
+                <div className="mono-data text-sm text-foreground">~200 bytes</div>
               </div>
             </div>
           </div>

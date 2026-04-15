@@ -5,22 +5,22 @@ const steps = [
   {
     num: "01",
     title: "Connect Platforms",
-    description: "Link gig platform accounts via OAuth. Acre fetches earnings data locally — nothing leaves your device.",
+    description: "Link gig accounts via secure OAuth. Reclaim Protocol witnesses your login — encrypted data never visible to Acre.",
   },
   {
     num: "02",
     title: "Generate ZK Proof",
-    description: "Client-side proof generation using Groth16. Proves income exceeds a threshold without revealing the actual amount.",
+    description: "Zero-knowledge proof generated via Reclaim Protocol. Proves income tier without revealing exact earnings or transaction history.",
   },
   {
     num: "03",
     title: "Anchor On-Chain",
-    description: "Proof hash is anchored to Algorand as a verifiable attestation. Timestamped, immutable, publicly auditable.",
+    description: "Proof attestation stored on Algorand. Immutable credit tier assigned — timestamped and publicly verifiable.",
   },
   {
     num: "04",
     title: "Share Selectively",
-    description: "Present your proof to verifiers — landlords, lenders, institutions. They verify cryptographically. No data exchanged.",
+    description: "Lenders query your Algorand credit tier. Cryptographically verified. No raw data ever shared.",
   },
 ];
 
@@ -73,30 +73,34 @@ const ArchitectureSection = () => {
 
               <div className="space-y-4 mono-data text-sm">
                 <div className="flex justify-between border-b border-border pb-3">
-                  <span className="text-muted-foreground">proof_type</span>
-                  <span className="text-foreground">groth16_bn254</span>
+                  <span className="text-muted-foreground">attestation_type</span>
+                  <span className="text-foreground">Zero-Knowledge Proof</span>
+                </div>
+                <div className="flex justify-between border-b border-border pb-3">
+                  <span className="text-muted-foreground">provider</span>
+                  <span className="text-foreground">Reclaim Protocol</span>
                 </div>
                 <div className="flex justify-between border-b border-border pb-3">
                   <span className="text-muted-foreground">claim</span>
-                  <span className="text-primary">income &gt;= threshold</span>
+                  <span className="text-primary">Income Tier Verified</span>
                 </div>
                 <div className="flex justify-between border-b border-border pb-3">
-                  <span className="text-muted-foreground">data_exposed</span>
-                  <span className="text-success">null</span>
+                  <span className="text-muted-foreground">raw_data_exposed</span>
+                  <span className="text-success">None</span>
                 </div>
                 <div className="flex justify-between border-b border-border pb-3">
                   <span className="text-muted-foreground">proof_size</span>
-                  <span className="text-foreground">192 bytes</span>
+                  <span className="text-foreground">~200 bytes</span>
                 </div>
                 <div className="flex justify-between border-b border-border pb-3">
-                  <span className="text-muted-foreground">verify_time</span>
-                  <span className="text-foreground">~180ms</span>
+                  <span className="text-muted-foreground">verification_time</span>
+                  <span className="text-foreground">&lt;200ms</span>
                 </div>
                 <div className="flex justify-between border-b border-border pb-3">
                   <span className="text-muted-foreground">chain</span>
                   <span className="text-foreground flex items-center gap-2">
                     <AlgorandChain size={16} />
-                    algorand_mainnet
+                    Algorand Testnet
                   </span>
                 </div>
                 <div className="flex justify-between">

@@ -49,9 +49,9 @@ const HeroSection = () => {
           <div
             className={`flex flex-wrap gap-4 mb-16 transition-all duration-700 delay-300 ${visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}
           >
-            <button className="border border-primary bg-primary px-6 py-3 text-sm font-heading font-semibold text-primary-foreground hover:bg-primary/90 transition-colors rounded-sm hard-shadow">
+            <Link to="/generate" className="border border-primary bg-primary px-6 py-3 text-sm font-heading font-semibold text-primary-foreground hover:bg-primary/90 transition-colors rounded-sm hard-shadow">
               Generate Proof
-            </button>
+            </Link>
             <button className="border border-border px-6 py-3 text-sm font-heading font-medium text-foreground hover:border-muted-foreground transition-colors rounded-sm">
               View Protocol Spec
             </button>

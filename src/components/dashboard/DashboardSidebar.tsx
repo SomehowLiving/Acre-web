@@ -51,7 +51,7 @@ const DashboardSidebar = () => {
       <div className="px-6 py-4 border-t border-border">
         <div className="text-xs text-muted-foreground mono-data">
           <p>Protocol v2.1.0</p>
-          <p className="mt-1 text-secondary">Circuit: groth16_bn254</p>
+          <p className="mt-1 text-secondary">ZK Attestation Circuit</p>
         </div>
       </div>
     </aside>

@@ -19,7 +19,7 @@ export interface UserProfile {
 }
 
 const BACKEND_VERIFY_URL =
-  (import.meta.env.VITE_BACKEND_VERIFY_URL as string) || "http://localhost:3001/verify-proof";
+  (import.meta.env.VITE_BACKEND_VERIFY_URL as string) || "https://lushier-rosalia-superearthly.ngrok-free.dev/verify-proof";
 
 function getBaseUrl(): string {
   return BACKEND_VERIFY_URL.replace(/\/verify-proof\/?$/, "");

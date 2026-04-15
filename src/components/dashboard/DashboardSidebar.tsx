@@ -5,8 +5,8 @@ const navItems = [
   { label: "Proofs", path: "/dashboard", icon: ShieldProof },
   { label: "Income", path: "/dashboard/income", icon: IncomeStream },
   { label: "Identity", path: "/dashboard/identity", icon: GigWorker },
-  { label: "Attestations", path: "/dashboard/attestations", icon: ProofValid },
-  { label: "Data Vault", path: "/dashboard/vault", icon: DataMinimal },
+  { label: "Attestations", path: "/generate", icon: ProofValid },
+  { label: "Data Vault", path: "/verify", icon: DataMinimal },
 ];
 
 const DashboardSidebar = () => {

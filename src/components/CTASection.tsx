@@ -17,9 +17,14 @@ const CTASection = () => {
               <Link to="/generate" className="border border-primary bg-primary px-8 py-3 text-sm font-heading font-semibold text-primary-foreground hover:bg-primary/90 transition-colors rounded-sm hard-shadow">
                 Start Proving
               </Link>
-              <button className="border border-border px-8 py-3 text-sm font-heading font-medium text-foreground hover:border-muted-foreground transition-colors rounded-sm">
+              <a
+                href="https://github.com/SomehowLiving/acre"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="border border-border px-8 py-3 text-sm font-heading font-medium text-foreground hover:border-muted-foreground transition-colors rounded-sm inline-block text-center"
+              >
                 Read Whitepaper
-              </button>
+              </a>
             </div>
           </div>
         </ScrollReveal>

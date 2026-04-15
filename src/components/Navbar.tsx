@@ -22,9 +22,9 @@ const Navbar = () => {
             Architecture
           </a>
         </div>
-        <button className="border border-primary bg-primary/10 px-4 py-1.5 text-sm font-heading font-medium text-primary hover:bg-primary/20 transition-colors rounded-sm">
+        <Link to="/launch" className="border border-primary bg-primary/10 px-4 py-1.5 text-sm font-heading font-medium text-primary hover:bg-primary/20 transition-colors rounded-sm">
           Launch App
-        </button>
+        </Link>
       </div>
     </nav>
   );

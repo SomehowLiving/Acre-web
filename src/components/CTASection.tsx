@@ -14,9 +14,9 @@ const CTASection = () => {
               Join the protocol. Generate your first zero-knowledge income attestation.
             </p>
             <div className="flex flex-wrap justify-center gap-4">
-              <button className="border border-primary bg-primary px-8 py-3 text-sm font-heading font-semibold text-primary-foreground hover:bg-primary/90 transition-colors rounded-sm hard-shadow">
+              <Link to="/generate" className="border border-primary bg-primary px-8 py-3 text-sm font-heading font-semibold text-primary-foreground hover:bg-primary/90 transition-colors rounded-sm hard-shadow">
                 Start Proving
-              </button>
+              </Link>
               <button className="border border-border px-8 py-3 text-sm font-heading font-medium text-foreground hover:border-muted-foreground transition-colors rounded-sm">
                 Read Whitepaper
               </button>

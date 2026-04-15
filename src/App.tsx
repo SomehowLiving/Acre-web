@@ -8,6 +8,7 @@ import Index from "./pages/Index";
 import Dashboard from "./pages/Dashboard";
 import GenerateProof from "./pages/GenerateProof";
 import LenderVerification from "./pages/LenderVerification";
+import RoleSelect from "./pages/RoleSelect";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -24,6 +25,7 @@ const App = () => (
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/dashboard/*" element={<Dashboard />} />
             <Route path="/generate" element={<GenerateProof />} />
+            <Route path="/launch" element={<RoleSelect />} />
             <Route path="/verify" element={<LenderVerification />} />
             <Route path="*" element={<NotFound />} />
           </Routes>

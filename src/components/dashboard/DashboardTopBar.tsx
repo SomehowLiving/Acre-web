@@ -2,9 +2,10 @@ import { motion } from "framer-motion";
 import { useWallet, truncateAddress } from "@/contexts/WalletContext";
 import { useEffect, useState } from "react";
 import { fetchProofCount } from "@/lib/api";
+import { Link } from "react-router-dom";
 
 const DashboardTopBar = () => {
-  const { account, connectWallet, disconnectWallet } = useWallet();
+  const { account, connectWallet, disconnectWallet, connecting } = useWallet();
   const [proofCount, setProofCount] = useState(0);
 
   useEffect(() => {
@@ -41,6 +42,16 @@ const DashboardTopBar = () => {
 
         <div className="w-[1px] h-4 bg-border" />
 
+        <Link
+          to="/digi"
+          className="flex items-center gap-2 px-3 py-1.5 border border-primary/40 text-xs font-heading text-primary tracking-wide hover:bg-primary/5 transition-colors"
+        >
+          <div className="w-2 h-2 bg-primary" />
+          <span>DigiLocker</span>
+        </Link>
+
+        <div className="w-[1px] h-4 bg-border" />
+
         {/* Wallet */}
         {account ? (
           <button
@@ -53,10 +64,11 @@ const DashboardTopBar = () => {
         ) : (
           <button
             onClick={connectWallet}
+            disabled={connecting}
             className="flex items-center gap-2 px-3 py-1.5 border border-border text-xs font-heading text-foreground tracking-wide hover:bg-muted transition-colors"
           >
             <div className="w-2 h-2 bg-muted-foreground" />
-            <span>Connect Wallet</span>
+            <span>{connecting ? "Connecting..." : "Connect Wallet"}</span>
           </button>
         )}
       </div>

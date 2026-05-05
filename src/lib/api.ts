@@ -6,6 +6,46 @@ export interface VerifyResponse {
   creditLimit: number;
   txId: string;
   message?: string;
+  identity?: IdentityVerificationEnvelope;
+}
+
+export interface IdentityFlags {
+  isIndian: boolean;
+  ageOver18: boolean;
+  isVerifiedHuman: boolean;
+}
+
+export interface AlgoPlonkStatus {
+  proofVerified: boolean;
+  verificationMode: "shape_verified" | "onchain_verified";
+  proofHash: string;
+  publicInputsHash: string;
+  onchainVerification?: {
+    verified: boolean;
+    txId: string | null;
+  } | null;
+  onchainError?: string | null;
+  proofChunkCount?: number;
+  publicInputChunkCount?: number;
+}
+
+export interface IdentityVerificationEnvelope {
+  requestId: string;
+  walletAddress?: string;
+  status: string;
+  authUrl?: string;
+  flags: IdentityFlags | null;
+  claimHashes: Record<string, string> | null;
+  algoplonk?: AlgoPlonkStatus | null;
+}
+
+export interface VerifyWorkerProfilePayload {
+  walletAddress: string;
+  identityRequestId: string;
+  reclaimProof: ProofPayload;
+  algoplonkProofHex: string;
+  algoplonkPublicInputsHex: string;
+  claimType?: string;
 }
 
 export interface UserProfile {
@@ -22,7 +62,7 @@ const BACKEND_VERIFY_URL =
   (import.meta.env.VITE_BACKEND_VERIFY_URL as string) || "https://lushier-rosalia-superearthly.ngrok-free.dev/verify-proof";
 
 function getBaseUrl(): string {
-  return BACKEND_VERIFY_URL.replace(/\/verify-proof\/?$/, "");
+  return BACKEND_VERIFY_URL.replace(/\/(verify-proof|verify-worker-profile)\/?$/, "");
 }
 
 export async function verifyProofWithBackend(
@@ -37,6 +77,93 @@ export async function verifyProofWithBackend(
   const body = await response.json().catch(() => ({ message: "Invalid JSON response from backend" }));
   if (!response.ok || !body.success) throw new Error(body.message || "Verification failed");
   return body as VerifyResponse;
+}
+
+export async function createDigiLockerRequest(
+  walletAddress: string,
+  redirectUrl?: string
+): Promise<IdentityVerificationEnvelope> {
+  const response = await fetch(`${getBaseUrl()}/api/identity/digilocker/request`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ walletAddress, redirectUrl }),
+  });
+  const body = await response.json().catch(() => ({ message: "Invalid JSON response from backend" }));
+  if (!response.ok || !body.success) throw new Error(body.message || "Failed to create DigiLocker request");
+  return body as IdentityVerificationEnvelope;
+}
+
+export async function pollDigiLockerStatus(requestId: string): Promise<IdentityVerificationEnvelope> {
+  const response = await fetch(`${getBaseUrl()}/api/identity/digilocker/${requestId}/status`);
+  const body = await response.json().catch(() => ({ message: "Invalid JSON response from backend" }));
+  if (!response.ok || !body.success) throw new Error(body.message || "Failed to poll DigiLocker status");
+  return body as IdentityVerificationEnvelope;
+}
+
+export async function verifyWorkerProfile(
+  payload: VerifyWorkerProfilePayload
+): Promise<VerifyResponse> {
+  const response = await fetch(`${getBaseUrl()}/verify-worker-profile`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  const body = await response.json().catch(() => ({ message: "Invalid JSON response from backend" }));
+  if (!response.ok || !body.success) throw new Error(body.message || "Worker profile verification failed");
+  return body as VerifyResponse;
+}
+
+export async function fetchDigiHealth(): Promise<{
+  success: boolean;
+  digilockerConfigured: boolean;
+  algoplonk: {
+    verifyAppId: number | null;
+    requireOnchainVerify: boolean;
+    simulateOnly: boolean;
+  };
+}> {
+  const response = await fetch(`${getBaseUrl()}/api/digi/health`);
+  const body = await response.json().catch(() => ({ message: "Invalid JSON response from backend" }));
+  if (!response.ok || !body.success) throw new Error(body.message || "Failed to fetch Digi health");
+  return body;
+}
+
+export async function createDigiTestRequest(
+  walletAddress: string,
+  redirectUrl?: string
+): Promise<IdentityVerificationEnvelope> {
+  const response = await fetch(`${getBaseUrl()}/api/digi/request`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ walletAddress, redirectUrl }),
+  });
+  const body = await response.json().catch(() => ({ message: "Invalid JSON response from backend" }));
+  if (!response.ok || !body.success) throw new Error(body.message || "Failed to create Digi test request");
+  return body as IdentityVerificationEnvelope;
+}
+
+export async function fetchDigiTestStatus(requestId: string): Promise<IdentityVerificationEnvelope> {
+  const response = await fetch(`${getBaseUrl()}/api/digi/${requestId}/status`);
+  const body = await response.json().catch(() => ({ message: "Invalid JSON response from backend" }));
+  if (!response.ok || !body.success) throw new Error(body.message || "Failed to fetch Digi test status");
+  return body as IdentityVerificationEnvelope;
+}
+
+export async function verifyDigiAlgoPlonk(payload: {
+  walletAddress: string;
+  requestId: string;
+  algoplonkProofHex: string;
+  algoplonkPublicInputsHex: string;
+  claimType?: string;
+}): Promise<IdentityVerificationEnvelope> {
+  const response = await fetch(`${getBaseUrl()}/api/digi/verify`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  const body = await response.json().catch(() => ({ message: "Invalid JSON response from backend" }));
+  if (!response.ok || !body.success) throw new Error(body.message || "Failed to verify Digi AlgoPlonk payload");
+  return body as IdentityVerificationEnvelope;
 }
 
 export async function fetchUserProfile(address: string): Promise<UserProfile | null> {

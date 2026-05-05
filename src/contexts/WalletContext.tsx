@@ -5,7 +5,8 @@ import algosdk from "algosdk";
 interface WalletContextValue {
   account: string | null;
   connecting: boolean;
-  connectWallet: () => Promise<void>;
+  connectWallet: () => Promise<string>;
+  getActiveAccount: () => Promise<string | null>;
   disconnectWallet: () => Promise<void>;
   signTransactions: (txns: algosdk.Transaction[]) => Promise<Uint8Array[]>;
   peraWallet: PeraWalletConnect;
@@ -14,6 +15,13 @@ interface WalletContextValue {
 const WalletContext = createContext<WalletContextValue | null>(null);
 
 const peraWallet = new PeraWalletConnect();
+
+function normalizeWalletAddress(value: unknown): string | null {
+  if (typeof value !== "string") return null;
+  const candidate = value.trim();
+  if (!candidate) return null;
+  return algosdk.isValidAddress(candidate) ? candidate : null;
+}
 
 export function truncateAddress(address: string): string {
   if (!address || address.length < 12) return address;
@@ -29,7 +37,8 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     (async () => {
       try {
         const accounts = await peraWallet.reconnectSession();
-        if (mounted && accounts?.length) setAccount(accounts[0]);
+        const active = normalizeWalletAddress(accounts?.[0]);
+        if (mounted) setAccount(active);
       } catch {
         if (mounted) setAccount(null);
       }
@@ -41,12 +50,29 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     setConnecting(true);
     try {
       const accounts = await peraWallet.connect();
-      if (!accounts?.length) throw new Error("No wallet account returned");
-      setAccount(accounts[0]);
+      const active = normalizeWalletAddress(accounts?.[0]);
+      if (!active) throw new Error("No valid wallet account returned");
+      setAccount(active);
+      return active;
     } finally {
       setConnecting(false);
     }
   }, []);
+
+  const getActiveAccount = useCallback(async () => {
+    if (account && normalizeWalletAddress(account)) {
+      return account;
+    }
+    try {
+      const accounts = await peraWallet.reconnectSession();
+      const active = normalizeWalletAddress(accounts?.[0]);
+      setAccount(active);
+      return active;
+    } catch {
+      setAccount(null);
+      return null;
+    }
+  }, [account]);
 
   const disconnectWallet = useCallback(async () => {
     await peraWallet.disconnect();
@@ -54,12 +80,16 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   }, []);
 
   const signTransactions = useCallback(async (txns: algosdk.Transaction[]) => {
+    const active = await getActiveAccount();
+    if (!active) {
+      throw new Error("No active wallet session available for signing");
+    }
     const txGroup = txns.map((txn) => ({ txn }));
     return peraWallet.signTransaction([txGroup]);
-  }, []);
+  }, [getActiveAccount]);
 
   return (
-    <WalletContext.Provider value={{ account, connecting, connectWallet, disconnectWallet, signTransactions, peraWallet }}>
+    <WalletContext.Provider value={{ account, connecting, connectWallet, getActiveAccount, disconnectWallet, signTransactions, peraWallet }}>
       {children}
     </WalletContext.Provider>
   );

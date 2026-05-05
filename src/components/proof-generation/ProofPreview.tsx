@@ -90,6 +90,39 @@ export const ProofPreview: React.FC<ProofPreviewProps> = ({
         </motion.div>
       )}
 
+      {proofData.identity && (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="p-6 border border-primary/40 bg-primary/5"
+        >
+          <div className="flex items-center gap-2 mb-4">
+            <ShieldProof size={18} state="success" />
+            <span className="font-heading text-sm tracking-wide text-primary">IDENTITY STATUS</span>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+            <div>
+              <div className="text-xs text-muted-foreground mb-1">REQUEST ID</div>
+              <div className="font-mono text-xs break-all">{proofData.identity.requestId}</div>
+            </div>
+            <div>
+              <div className="text-xs text-muted-foreground mb-1">STATUS</div>
+              <div className="font-heading">{proofData.identity.status}</div>
+            </div>
+            <div>
+              <div className="text-xs text-muted-foreground mb-1">INDIAN / 18+</div>
+              <div className="font-heading">
+                {proofData.identity.flags?.isIndian ? "Y" : "N"} / {proofData.identity.flags?.ageOver18 ? "Y" : "N"}
+              </div>
+            </div>
+            <div>
+              <div className="text-xs text-muted-foreground mb-1">ALGOPLONK MODE</div>
+              <div className="font-heading">{proofData.identity.algoplonkMode || "n/a"}</div>
+            </div>
+          </div>
+        </motion.div>
+      )}
+
       {/* Proof Hash */}
       <motion.div
         initial={{ opacity: 0, y: 10 }}

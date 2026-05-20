@@ -9,6 +9,12 @@ import Dashboard from "./pages/Dashboard";
 import GenerateProof from "./pages/GenerateProof";
 import DigiTest from "./pages/DigiTest";
 import LenderVerification from "./pages/LenderVerification";
+import BlueScorePage from "./pages/BlueScorePage";
+import WhatIfSimulatorPage from "./pages/WhatIfSimulatorPage";
+import PassportGoalsPage from "./pages/PassportGoalsPage";
+import LenderOverviewPage from "./pages/LenderOverviewPage";
+import LenderConfigPage from "./pages/LenderConfigPage";
+import LenderRiskPage from "./pages/LenderRiskPage";
 import RoleSelect from "./pages/RoleSelect";
 import NotFound from "./pages/NotFound";
 
@@ -29,6 +35,12 @@ const App = () => (
             <Route path="/digi" element={<DigiTest />} />
             <Route path="/launch" element={<RoleSelect />} />
             <Route path="/verify" element={<LenderVerification />} />
+            <Route path="/dashboard/blue-score" element={<BlueScorePage />} />
+            <Route path="/dashboard/simulator" element={<WhatIfSimulatorPage />} />
+            <Route path="/dashboard/passport-goals" element={<PassportGoalsPage />} />
+            <Route path="/lender/overview" element={<LenderOverviewPage />} />
+            <Route path="/lender/config" element={<LenderConfigPage />} />
+            <Route path="/lender/risk" element={<LenderRiskPage />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

@@ -36,7 +36,7 @@ const DashboardTopBar = () => {
       <div className="flex items-center gap-6">
         {/* Proof count */}
         <div className="flex items-center gap-2">
-          <span className="text-xs text-muted-foreground font-heading tracking-widest uppercase">Proofs</span>
+          <span className="text-xs text-muted-foreground font-heading tracking-widest uppercase">Passports Issued</span>
           <span className="text-sm font-heading text-secondary mono-data">{proofCount}</span>
         </div>
 
@@ -47,7 +47,7 @@ const DashboardTopBar = () => {
           className="flex items-center gap-2 px-3 py-1.5 border border-primary/40 text-xs font-heading text-primary tracking-wide hover:bg-primary/5 transition-colors"
         >
           <div className="w-2 h-2 bg-primary" />
-          <span>DigiLocker</span>
+          <span>Identity Bond</span>
         </Link>
 
         <div className="w-[1px] h-4 bg-border" />

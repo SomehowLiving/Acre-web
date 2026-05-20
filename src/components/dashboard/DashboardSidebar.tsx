@@ -2,11 +2,15 @@ import { useLocation, Link } from "react-router-dom";
 import { ShieldProof, ProofValid, IncomeStream, GigWorker, DataMinimal } from "@/components/ProofMarks";
 
 const navItems = [
-  { label: "Proofs", path: "/dashboard", icon: ShieldProof },
-  { label: "Income", path: "/dashboard/income", icon: IncomeStream },
-  { label: "Identity", path: "/dashboard/identity", icon: GigWorker },
-  { label: "Attestations", path: "/generate", icon: ProofValid },
-  { label: "Data Vault", path: "/verify", icon: DataMinimal },
+  { label: "Passport Home", path: "/dashboard", icon: ShieldProof },
+  { label: "BLUE SCORE", path: "/dashboard/blue-score", icon: IncomeStream },
+  { label: "WHAT-IF CREDIT SIMULATOR (PREVIEW)", path: "/dashboard/simulator", icon: GigWorker },
+  { label: "Passport and Goals", path: "/dashboard/passport-goals", icon: DataMinimal },
+  { label: "Generate Attestation", path: "/generate", icon: ProofValid },
+  { label: "Lender Overview", path: "/lender/overview", icon: ShieldProof },
+  { label: "Lender Config", path: "/lender/config", icon: IncomeStream },
+  { label: "Lender Risk", path: "/lender/risk", icon: GigWorker },
+    { label: "Data Vault", path: "/verify", icon: DataMinimal },
 ];
 
 const DashboardSidebar = () => {

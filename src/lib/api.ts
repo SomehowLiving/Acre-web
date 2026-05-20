@@ -58,6 +58,85 @@ export interface UserProfile {
   platform: string;
 }
 
+export interface BlueScoreBreakdownFactor {
+  bucket: string;
+  points: number;
+}
+
+export interface BlueScoreResponse {
+  success: boolean;
+  address: string;
+  verifiedKyc: boolean;
+  score: number;
+  tier: "Blue Prime" | "Blue Plus" | "Blue Basic";
+  loanEligibility: number;
+  breakdown: {
+    income: BlueScoreBreakdownFactor;
+    consistency: BlueScoreBreakdownFactor;
+    rating: BlueScoreBreakdownFactor;
+    activity: BlueScoreBreakdownFactor;
+  };
+  features: {
+    monthlyIncome: number;
+    consistencyMonths: number;
+    rating: number;
+    activityLevel: "low" | "medium" | "high";
+  };
+  scoreFreshnessDays: number;
+  proofExpiresInDays: number;
+  message: string;
+}
+
+export interface BlueScoreSimulationResponse {
+  success: boolean;
+  simulationOnly: boolean;
+  score: number;
+  tier: "Blue Prime" | "Blue Plus" | "Blue Basic";
+  loanEligibility: number;
+  breakdown: BlueScoreResponse["breakdown"];
+  coachingMessage: string;
+  disclaimer: string;
+}
+
+export interface PassportResponse {
+  success: boolean;
+  address: string;
+  passport: {
+    identity: {
+      kycVerified: boolean;
+      sameIdentityAcrossSessions: boolean;
+      piiExposed: boolean;
+      identityBonded: boolean;
+    };
+    blueScore: {
+      score: number;
+      tier: "Blue Prime" | "Blue Plus" | "Blue Basic";
+      breakdown: BlueScoreResponse["breakdown"];
+    };
+    trust: {
+      fraudRisk: string;
+      scoreVerifiedDaysAgo: number;
+      reputationUpdateCadence: string;
+      incomeProofExpiryDays: number;
+    };
+  };
+  pipeline: string[];
+}
+
+export interface GrowthResponse {
+  success: boolean;
+  address: string;
+  skills: string[];
+  recommendations: string[];
+  quests: Array<{
+    id: string;
+    title: string;
+    progressMonths: number;
+    targetMonths: number;
+    reward: string;
+  }>;
+}
+
 const BACKEND_VERIFY_URL =
   (import.meta.env.VITE_BACKEND_VERIFY_URL as string) || "https://lushier-rosalia-superearthly.ngrok-free.dev/verify-proof";
 
@@ -252,4 +331,45 @@ export async function fetchEligibility(address: string): Promise<number> {
   } catch {
     return 0;
   }
+}
+
+export async function fetchBlueScore(address: string): Promise<BlueScoreResponse> {
+  const base = getBaseUrl();
+  const res = await fetch(`${base}/api/blue-score/${address}`);
+  const body = await res.json().catch(() => ({ message: "Invalid JSON response from backend" }));
+  if (!res.ok || !body.success) throw new Error(body.message || "Failed to fetch blue score");
+  return body as BlueScoreResponse;
+}
+
+export async function simulateBlueScore(payload: {
+  monthlyIncome: number;
+  consistencyMonths: number;
+  rating: number;
+  activityLevel: "low" | "medium" | "high";
+}): Promise<BlueScoreSimulationResponse> {
+  const base = getBaseUrl();
+  const res = await fetch(`${base}/api/blue-score/simulate`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  const body = await res.json().catch(() => ({ message: "Invalid JSON response from backend" }));
+  if (!res.ok || !body.success) throw new Error(body.message || "Failed to simulate blue score");
+  return body as BlueScoreSimulationResponse;
+}
+
+export async function fetchPassport(address: string): Promise<PassportResponse> {
+  const base = getBaseUrl();
+  const res = await fetch(`${base}/api/passport/${address}`);
+  const body = await res.json().catch(() => ({ message: "Invalid JSON response from backend" }));
+  if (!res.ok || !body.success) throw new Error(body.message || "Failed to fetch passport");
+  return body as PassportResponse;
+}
+
+export async function fetchGrowth(address: string): Promise<GrowthResponse> {
+  const base = getBaseUrl();
+  const res = await fetch(`${base}/api/growth/${address}`);
+  const body = await res.json().catch(() => ({ message: "Invalid JSON response from backend" }));
+  if (!res.ok || !body.success) throw new Error(body.message || "Failed to fetch growth recommendations");
+  return body as GrowthResponse;
 }

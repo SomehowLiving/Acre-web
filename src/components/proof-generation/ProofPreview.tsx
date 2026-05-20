@@ -1,8 +1,9 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ProofValid, ShieldProof, AlgorandChain } from "@/components/ProofMarks";
 import type { ProofData } from "@/pages/GenerateProof";
 import { toast } from "@/hooks/use-toast";
+import { fetchGrowth, fetchPassport, type GrowthResponse, type PassportResponse } from "@/lib/api";
 
 interface ProofPreviewProps {
   proofData: ProofData;
@@ -14,6 +15,13 @@ export const ProofPreview: React.FC<ProofPreviewProps> = ({
   onBack,
 }) => {
   const [expandedSections, setExpandedSections] = useState<string[]>(["public"]);
+  const [simIncome, setSimIncome] = useState<"lt20" | "20to40" | "gt40">("20to40");
+  const [simConsistency, setSimConsistency] = useState<"lt3" | "3to6" | "gt6">("3to6");
+  const [simRating, setSimRating] = useState<"lt4" | "4to45" | "gt45">("4to45");
+  const [simActivity, setSimActivity] = useState<"low" | "medium" | "high">("medium");
+  const [activeInsightTab, setActiveInsightTab] = useState<"passport" | "goals">("passport");
+  const [passportData, setPassportData] = useState<PassportResponse | null>(null);
+  const [growthData, setGrowthData] = useState<GrowthResponse | null>(null);
 
   const toggleSection = (section: string) => {
     setExpandedSections((prev) =>
@@ -33,6 +41,56 @@ export const ProofPreview: React.FC<ProofPreviewProps> = ({
 
   // Already submitted if we have a txId from backend
   const isSubmitted = !!proofData.txId;
+  const consistencyMonths = proofData.publicSignals.consistency_months;
+  const baseIncomeBucket: "lt20" | "20to40" | "gt40" =
+    proofData.tier && proofData.tier >= 3 ? "gt40" : "20to40";
+  const baseConsistencyBucket: "lt3" | "3to6" | "gt6" =
+    consistencyMonths > 6 ? "gt6" : consistencyMonths >= 3 ? "3to6" : "lt3";
+  const baseRatingBucket: "lt4" | "4to45" | "gt45" = proofData.tier && proofData.tier >= 2 ? "gt45" : "4to45";
+  const baseActivityBucket: "low" | "medium" | "high" = proofData.tier && proofData.tier >= 3 ? "high" : "medium";
+
+  const points = {
+    income: { lt20: 50, "20to40": 120, gt40: 200 },
+    consistency: { lt3: 30, "3to6": 100, gt6: 180 },
+    rating: { lt4: 40, "4to45": 100, gt45: 160 },
+    activity: { low: 50, medium: 100, high: 150 },
+  } as const;
+
+  const baseScore =
+    points.income[baseIncomeBucket] +
+    points.consistency[baseConsistencyBucket] +
+    points.rating[baseRatingBucket] +
+    points.activity[baseActivityBucket];
+
+  const simulatedScore =
+    points.income[simIncome] +
+    points.consistency[simConsistency] +
+    points.rating[simRating] +
+    points.activity[simActivity];
+
+  const resolveTier = (score: number) => (score >= 800 ? "Blue Prime" : score >= 650 ? "Blue Plus" : "Blue Basic");
+  const simulatedLoanLimit = simulatedScore >= 800 ? 50000 : simulatedScore >= 650 ? 35000 : 20000;
+  const baseLoanLimit = baseScore >= 800 ? 50000 : baseScore >= 650 ? 35000 : 20000;
+
+  useEffect(() => {
+    const maybeAddress = proofData.walletAddress;
+    if (!maybeAddress) return;
+    let cancelled = false;
+    Promise.all([fetchPassport(maybeAddress), fetchGrowth(maybeAddress)])
+      .then(([passport, growth]) => {
+        if (cancelled) return;
+        setPassportData(passport);
+        setGrowthData(growth);
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setPassportData(null);
+        setGrowthData(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [proofData.walletAddress]);
 
   return (
     <div className="space-y-8">
@@ -79,12 +137,26 @@ export const ProofPreview: React.FC<ProofPreviewProps> = ({
             </div>
             <div>
               <div className="text-xs text-muted-foreground mb-1">TX ID</div>
-              <button
-                onClick={() => proofData.txId && copyToClipboard(proofData.txId, "Transaction ID")}
-                className="font-mono text-xs text-primary hover:underline break-all text-left"
-              >
-                {proofData.txId ? `${proofData.txId.slice(0, 16)}...` : "-"}
-              </button>
+
+              <div className="flex items-center gap-2">
+                <a
+                  href={`https://lora.algokit.io/testnet/transaction/${proofData.txId}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-mono text-xs text-primary hover:underline break-all"
+                >
+                  {`${proofData.txId.slice(0, 16)}...`}
+                </a>
+
+                <button
+                  onClick={() =>
+                    copyToClipboard(proofData.txId, "Transaction ID")
+                  }
+                  className="text-xs text-muted-foreground hover:text-primary"
+                >
+                  Copy
+                </button>
+              </div>
             </div>
           </div>
         </motion.div>
@@ -122,6 +194,149 @@ export const ProofPreview: React.FC<ProofPreviewProps> = ({
           </div>
         </motion.div>
       )}
+
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="p-6 border border-border bg-card"
+      >
+        <div className="text-xs text-muted-foreground mb-2">FINANCIAL PASSPORT FLOW</div>
+        <div className="text-sm leading-relaxed">
+          Identity Proof (DigiLocker) + Income Proof (Reclaim ZK) + Reputation Proof (ratings) → Feature Extraction →{" "}
+          <span className="font-heading text-secondary">Blue Score</span> → Loan Eligibility / Simulation
+        </div>
+      </motion.div>
+
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="p-6 border border-secondary/40 bg-secondary/5 space-y-4"
+      >
+        <div className="flex items-center justify-between">
+          <div>
+            <div className="text-xs text-muted-foreground">BLUE SCORE</div>
+            <div className="font-heading text-2xl text-secondary mono-data">{baseScore}</div>
+            <div className="text-xs text-muted-foreground">{resolveTier(baseScore)}</div>
+          </div>
+          <div className="text-xs text-muted-foreground">
+            KYC: {proofData.identity?.status === "identity_verified" ? "Verified" : "Pending"} • No PII exposed
+          </div>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+          <div className="p-3 border border-border bg-background/60">Consistency: +{points.consistency[baseConsistencyBucket]}</div>
+          <div className="p-3 border border-border bg-background/60">Income: +{points.income[baseIncomeBucket]}</div>
+          <div className="p-3 border border-border bg-background/60">Rating: +{points.rating[baseRatingBucket]}</div>
+          <div className="p-3 border border-border bg-background/60">Activity: +{points.activity[baseActivityBucket]}</div>
+        </div>
+      </motion.div>
+
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="p-6 border border-primary/40 bg-primary/5 space-y-4"
+      >
+        <div className="flex items-center justify-between">
+          <div>
+            <div className="text-xs text-muted-foreground">WHAT-IF CREDIT SIMULATOR (PREVIEW)</div>
+            <div className="font-heading text-xl">{simulatedScore} • {resolveTier(simulatedScore)}</div>
+          </div>
+          <div className="text-right text-sm">
+            <div className="text-muted-foreground">Estimated Limit</div>
+            <div className="font-heading mono-data">₹{simulatedLoanLimit.toLocaleString("en-IN")}</div>
+          </div>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+          <label className="flex flex-col gap-1">
+            <span className="text-xs text-muted-foreground">Monthly Income</span>
+            <select className="bg-background border border-border p-2" value={simIncome} onChange={(e) => setSimIncome(e.target.value as "lt20" | "20to40" | "gt40")}>
+              <option value="lt20">&lt; ₹20k</option>
+              <option value="20to40">₹20k - ₹40k</option>
+              <option value="gt40">&gt; ₹40k</option>
+            </select>
+          </label>
+          <label className="flex flex-col gap-1">
+            <span className="text-xs text-muted-foreground">Months Active</span>
+            <select className="bg-background border border-border p-2" value={simConsistency} onChange={(e) => setSimConsistency(e.target.value as "lt3" | "3to6" | "gt6")}>
+              <option value="lt3">&lt; 3 months</option>
+              <option value="3to6">3-6 months</option>
+              <option value="gt6">&gt; 6 months</option>
+            </select>
+          </label>
+          <label className="flex flex-col gap-1">
+            <span className="text-xs text-muted-foreground">Platform Rating</span>
+            <select className="bg-background border border-border p-2" value={simRating} onChange={(e) => setSimRating(e.target.value as "lt4" | "4to45" | "gt45")}>
+              <option value="lt4">&lt; 4.0</option>
+              <option value="4to45">4.0 - 4.5</option>
+              <option value="gt45">&gt; 4.5</option>
+            </select>
+          </label>
+          <label className="flex flex-col gap-1">
+            <span className="text-xs text-muted-foreground">Work Frequency</span>
+            <select className="bg-background border border-border p-2" value={simActivity} onChange={(e) => setSimActivity(e.target.value as "low" | "medium" | "high")}>
+              <option value="low">Low</option>
+              <option value="medium">Medium</option>
+              <option value="high">High</option>
+            </select>
+          </label>
+        </div>
+        <div className="text-xs text-muted-foreground">
+          {simulatedLoanLimit > baseLoanLimit
+            ? `If these improvements hold, estimated eligibility can increase from ₹${baseLoanLimit.toLocaleString("en-IN")} to ₹${simulatedLoanLimit.toLocaleString("en-IN")}.`
+            : "Simulation preview only. Actual eligibility requires fresh proof submission."}
+        </div>
+      </motion.div>
+
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="border border-border bg-card overflow-hidden"
+      >
+        <div className="flex border-b border-border">
+          <button
+            onClick={() => setActiveInsightTab("passport")}
+            className={`px-4 py-3 text-sm font-heading ${activeInsightTab === "passport" ? "bg-muted/40 text-foreground" : "text-muted-foreground hover:text-foreground"}`}
+          >
+            Passport
+          </button>
+          <button
+            onClick={() => setActiveInsightTab("goals")}
+            className={`px-4 py-3 text-sm font-heading ${activeInsightTab === "goals" ? "bg-muted/40 text-foreground" : "text-muted-foreground hover:text-foreground"}`}
+          >
+            Goals
+          </button>
+        </div>
+        <div className="p-4 text-sm">
+          {activeInsightTab === "passport" ? (
+            passportData ? (
+              <div className="space-y-3">
+                <div>KYC Verified: {passportData.passport.identity.kycVerified ? "Yes" : "No"} • Identity Bonded: {passportData.passport.identity.identityBonded ? "Yes" : "No"}</div>
+                <div>Fraud Risk: {passportData.passport.trust.fraudRisk} • Score verified {passportData.passport.trust.scoreVerifiedDaysAgo} days ago</div>
+                <div>Proof freshness: expires in {passportData.passport.trust.incomeProofExpiryDays} days</div>
+                <div className="text-xs text-muted-foreground">{passportData.pipeline.join(" -> ")}</div>
+              </div>
+            ) : (
+              <div className="text-muted-foreground">Connect a wallet-backed proof to load Passport details.</div>
+            )
+          ) : growthData ? (
+            <div className="space-y-3">
+              <div>
+                <div className="text-xs text-muted-foreground mb-1">Verified Skills</div>
+                <div>{growthData.skills.join(", ")}</div>
+              </div>
+              <div>
+                <div className="text-xs text-muted-foreground mb-1">Recommendations</div>
+                <div>{growthData.recommendations[0]}</div>
+              </div>
+              <div>
+                <div className="text-xs text-muted-foreground mb-1">Current Quest</div>
+                <div>{growthData.quests[0]?.title} ({growthData.quests[0]?.progressMonths}/{growthData.quests[0]?.targetMonths} months) • Reward: {growthData.quests[0]?.reward}</div>
+              </div>
+            </div>
+          ) : (
+            <div className="text-muted-foreground">Goals will appear once Passport data is available.</div>
+          )}
+        </div>
+      </motion.div>
 
       {/* Proof Hash */}
       <motion.div

@@ -26,6 +26,7 @@ export interface CircuitParams {
 }
 
 export interface ProofData {
+  walletAddress?: string;
   proofHash: string;
   publicSignals: {
     income_band: string;
@@ -146,6 +147,14 @@ const GenerateProof: React.FC = () => {
   };
 
   const handleStartIdentity = async () => {
+    if (identityState?.status === "identity_verified") {
+      toast({
+        title: "Already Verified",
+        description: "Identity is already linked to this wallet.",
+      });
+      return;
+    }
+
     const activeWallet = await ensureWalletAndOptIn();
     if (!activeWallet) return;
 
@@ -153,6 +162,16 @@ const GenerateProof: React.FC = () => {
     try {
       const session = await createDigiLockerRequest(activeWallet);
       setIdentityState(session);
+      // Only open consent window when consent is still pending.
+      if (session.authUrl && session.status !== "identity_verified") {
+        const popup = window.open(session.authUrl, "_blank", "noopener,noreferrer");
+        if (!popup) {
+          toast({
+            title: "Popup Blocked",
+            description: "Please allow popups and open the DigiLocker consent window.",
+          });
+        }
+      }
       toast({
         title: "DigiLocker Started",
         description: session.authUrl ? "Open the consent window and complete verification" : "Identity session created",
@@ -245,6 +264,7 @@ const GenerateProof: React.FC = () => {
         });
         const realProofData: ProofData = {
           ...animatedData,
+          walletAddress: account,
           proofHash: result.txId ? `0x${result.txId}` : animatedData.proofHash,
           tier: result.tier,
           creditLimit: result.creditLimit,
@@ -272,10 +292,10 @@ const GenerateProof: React.FC = () => {
           title: "Verification Failed",
           description: err instanceof Error ? err.message : "Backend verification failed",
         });
-        setProofData(animatedData);
+        setProofData({ ...animatedData, walletAddress: account });
       }
     } else {
-      setProofData(animatedData);
+      setProofData({ ...animatedData, walletAddress: account || undefined });
     }
     setIsGenerating(false);
     setCurrentStep(5);

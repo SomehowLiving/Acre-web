@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useWallet, truncateAddress } from "@/contexts/WalletContext";
 import {
   createDigiTestRequest,
@@ -29,6 +29,7 @@ async function buildDemoAlgoPlonkPayload(walletAddress: string, claimHash: strin
 }
 
 const DigiTest = () => {
+  const navigate = useNavigate();
   const { account, connectWallet, getActiveAccount, connecting } = useWallet();
   const [health, setHealth] = useState<null | {
     success: boolean;
@@ -59,12 +60,30 @@ const DigiTest = () => {
   };
 
   const handleCreateRequest = async () => {
+    if (identityState?.status === "identity_verified") {
+      toast({
+        title: "Already Verified",
+        description: "This wallet already has a verified DigiLocker identity.",
+      });
+      return;
+    }
+
     setBusy(true);
     try {
       const wallet = await ensureWallet();
       if (!wallet) throw new Error("No wallet connected");
       const session = await createDigiTestRequest(wallet);
       setIdentityState(session);
+      // In mock/auto-verified mode, don't open callback URLs.
+      if (session.authUrl && session.status !== "identity_verified" && health?.digilockerConfigured) {
+        const popup = window.open(session.authUrl, "_blank", "noopener,noreferrer");
+        if (!popup) {
+          toast({
+            title: "Popup Blocked",
+            description: "Please allow popups and open the DigiLocker consent window.",
+          });
+        }
+      }
       appendLog(`Created DigiLocker request ${session.requestId}`);
       toast({ title: "Digi Request Created", description: session.requestId });
     } catch (err) {
@@ -99,21 +118,27 @@ const DigiTest = () => {
     try {
       const wallet = await ensureWallet();
       if (!wallet) throw new Error("No wallet connected");
+      const latestSession = await fetchDigiTestStatus(identityState.requestId);
+      setIdentityState(latestSession);
+      if (latestSession.status !== "identity_verified") {
+        throw new Error("Identity not verified yet. Complete DigiLocker consent, then refresh.");
+      }
       const claimHash =
-        identityState.claimHashes.indianCitizen ||
-        identityState.claimHashes.ageOver18 ||
-        identityState.claimHashes.verifiedHuman;
+        latestSession.claimHashes?.indianCitizen ||
+        latestSession.claimHashes?.ageOver18 ||
+        latestSession.claimHashes?.verifiedHuman;
       if (!claimHash) throw new Error("Missing claim hash");
       const payload = await buildDemoAlgoPlonkPayload(wallet, claimHash);
       const verified = await verifyDigiAlgoPlonk({
         walletAddress: wallet,
-        requestId: identityState.requestId,
+        requestId: latestSession.requestId,
         claimType: "indianCitizen",
         ...payload,
       });
-      setIdentityState(verified);
+      setIdentityState({ ...verified, status: "identity_verified" });
       appendLog(`AlgoPlonk verified in mode: ${verified.algoplonk?.verificationMode || "unknown"}`);
       toast({ title: "AlgoPlonk Verified", description: verified.algoplonk?.verificationMode || "verified" });
+      setTimeout(() => navigate("/dashboard"), 600);
     } catch (err) {
       const message = err instanceof Error ? err.message : "Failed to verify AlgoPlonk";
       appendLog(`AlgoPlonk failed: ${message}`);

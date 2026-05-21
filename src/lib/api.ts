@@ -68,7 +68,7 @@ export interface BlueScoreResponse {
   address: string;
   verifiedKyc: boolean;
   score: number;
-  tier: "Blue Prime" | "Blue Plus" | "Blue Basic";
+  tier: "Blue Prime" | "Blue Plus" | "Blue Basic" | "No Tier";
   loanEligibility: number;
   breakdown: {
     income: BlueScoreBreakdownFactor;
@@ -84,6 +84,14 @@ export interface BlueScoreResponse {
   };
   scoreFreshnessDays: number;
   proofExpiresInDays: number;
+  onchain?: {
+    creditLimit: number;
+    eligibility: number;
+    verified: boolean;
+    tier: number;
+    riderCount: number;
+    riderRating: number;
+  };
   message: string;
 }
 
@@ -91,8 +99,9 @@ export interface BlueScoreSimulationResponse {
   success: boolean;
   simulationOnly: boolean;
   score: number;
-  tier: "Blue Prime" | "Blue Plus" | "Blue Basic";
+  tier: "Blue Prime" | "Blue Plus" | "Blue Basic" | "No Tier";
   loanEligibility: number;
+  apr?: string | null;
   breakdown: BlueScoreResponse["breakdown"];
   coachingMessage: string;
   disclaimer: string;
@@ -113,6 +122,12 @@ export interface PassportResponse {
       tier: "Blue Prime" | "Blue Plus" | "Blue Basic";
       breakdown: BlueScoreResponse["breakdown"];
     };
+    finance?: {
+      currentCreditLimit: number;
+      currentEligibility: number;
+      riderCount: number;
+      riderRating: number;
+    };
     trust: {
       fraudRisk: string;
       scoreVerifiedDaysAgo: number;
@@ -121,6 +136,17 @@ export interface PassportResponse {
     };
   };
   pipeline: string[];
+  journey?: Array<{
+    platform: string;
+    tenure: string;
+    incomeBand: string;
+    rating: string;
+    completionRate: string;
+    growthFromPrevious: string | null;
+  }>;
+  totalTenureMonths?: number;
+  totalGrowth?: string;
+  reliability?: string;
 }
 
 export interface GrowthResponse {
@@ -345,7 +371,10 @@ export async function simulateBlueScore(payload: {
   monthlyIncome: number;
   consistencyMonths: number;
   rating: number;
-  activityLevel: "low" | "medium" | "high";
+  activityDaysPerMonth: number;
+  currentCreditLimit?: number;
+  currentScore?: number;
+  currentTier?: string;
 }): Promise<BlueScoreSimulationResponse> {
   const base = getBaseUrl();
   const res = await fetch(`${base}/api/blue-score/simulate`, {

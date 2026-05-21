@@ -17,6 +17,7 @@ const PassportGoalsPage = () => {
 
   const quest = growth?.quests?.[0];
   const pct = quest ? Math.min(100, Math.round((quest.progressMonths / quest.targetMonths) * 100)) : 0;
+  const journey = passport?.journey || [];
 
   return (
     <div className="min-h-screen bg-background flex">
@@ -51,6 +52,28 @@ const PassportGoalsPage = () => {
               <p>Top recommendation: {growth?.recommendations?.[0] || "—"}</p>
             </section>
           </div>
+
+          <section className="p-5 border border-border bg-card space-y-3">
+            <p className="text-xs uppercase tracking-widest text-muted-foreground">Work Journey (ZK-Verified)</p>
+            <div className="relative pl-6 border-l-2 border-muted space-y-4">
+              {journey.map((step, i) => (
+                <div key={i} className="relative">
+                  <div className="absolute -left-[31px] top-1 w-4 h-4 rounded-full bg-secondary border-2 border-background" />
+                  <div className="flex items-center justify-between">
+                    <p className="font-heading text-sm">{step.platform}</p>
+                    <span className="text-xs text-muted-foreground">{step.tenure}</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    {step.incomeBand} · {step.rating}★ · {step.completionRate}% completion
+                  </p>
+                  {step.growthFromPrevious && <p className="text-xs text-green-600 mt-0.5">+{step.growthFromPrevious}% growth</p>}
+                </div>
+              ))}
+            </div>
+            <div className="p-3 border border-border bg-background/50 text-xs text-muted-foreground">
+              Cross-platform tenure: {passport?.totalTenureMonths ?? "—"} months · Income growth: {passport?.totalGrowth ?? "—"} · Reliability: {passport?.reliability ?? "—"}
+            </div>
+          </section>
         </main>
       </div>
     </div>

@@ -2,15 +2,21 @@ import { useEffect, useState } from "react";
 import DashboardSidebar from "@/components/dashboard/DashboardSidebar";
 import DashboardTopBar from "@/components/dashboard/DashboardTopBar";
 import { useWallet } from "@/contexts/WalletContext";
-import { fetchBlueScore, type BlueScoreResponse } from "@/lib/api";
+import { fetchBlueScore, fetchCreditLimit, fetchEligibility, fetchUserProfile, type BlueScoreResponse, type UserProfile } from "@/lib/api";
 
 const BlueScorePage = () => {
   const { account } = useWallet();
   const [data, setData] = useState<BlueScoreResponse | null>(null);
+  const [onchainCreditLimit, setOnchainCreditLimit] = useState(0);
+  const [onchainEligibility, setOnchainEligibility] = useState(0);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
 
   useEffect(() => {
     if (!account) return setData(null);
     fetchBlueScore(account).then(setData).catch(() => setData(null));
+    fetchCreditLimit(account).then(setOnchainCreditLimit).catch(() => setOnchainCreditLimit(0));
+    fetchEligibility(account).then(setOnchainEligibility).catch(() => setOnchainEligibility(0));
+    fetchUserProfile(account).then(setProfile).catch(() => setProfile(null));
   }, [account]);
 
   return (
@@ -25,10 +31,27 @@ const BlueScorePage = () => {
             <p className="text-sm text-muted-foreground mt-2">Acre is a privacy-preserving credit bureau for gig workers. Score is explainable, portable, and proof-backed.</p>
           </section>
 
+          <section className="p-6 border border-border bg-card">
+            <h2 className="font-heading text-lg mb-4">Active Credit & Next Milestone</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="p-3 border border-border bg-background/50">
+                <p className="text-xs text-muted-foreground uppercase">Current</p>
+                <p className="font-heading mt-1">On-chain limit: ₹{(data?.onchain?.creditLimit ?? onchainCreditLimit).toLocaleString("en-IN")}</p>
+                <p className="text-xs text-green-600 mt-0.5">Eligibility: ₹{(data?.onchain?.eligibility ?? onchainEligibility).toLocaleString("en-IN")} · Trips: {Number((data?.onchain?.riderCount ?? profile?.riderCount) || 0).toLocaleString("en-IN")}</p>
+              </div>
+              <div className="p-3 border border-secondary/30 bg-secondary/5">
+                <p className="text-xs text-secondary uppercase">Next Milestone</p>
+                <p className="font-heading mt-1">Projected: ₹{Math.round((data?.onchain?.creditLimit ?? onchainCreditLimit) * 1.6).toLocaleString("en-IN")} @ 11% APR</p>
+                <p className="text-xs text-muted-foreground mt-0.5">Unlock at Blue Prime (800+)</p>
+                <p className="text-xs text-secondary mt-1">Need: +{Math.max(0, 800 - (data?.score || 0))} points from consistency/rating/activity gains</p>
+              </div>
+            </div>
+          </section>
+
           <section className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <Metric title="Score" value={String(data?.score ?? "—")} accent />
             <Metric title="Tier" value={data?.tier ?? "—"} />
-            <Metric title="Eligibility" value={`₹${(data?.loanEligibility ?? 0).toLocaleString("en-IN")}`} />
+            <Metric title="Eligibility (On-chain)" value={`₹${onchainEligibility.toLocaleString("en-IN")}`} />
             <Metric title="Proof Freshness" value={`${data?.scoreFreshnessDays ?? "—"} days`} />
           </section>
 

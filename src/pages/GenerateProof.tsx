@@ -12,8 +12,10 @@ import {
   createDigiLockerRequest,
   pollDigiLockerStatus,
   verifyWorkerProfile,
+  getBaseUrl,
   type IdentityVerificationEnvelope,
   type VerifyResponse,
+  type ConsentRecord,
 } from "@/lib/api";
 import { toast } from "@/hooks/use-toast";
 
@@ -51,6 +53,7 @@ export interface ProofData {
     } | null;
     algoplonkMode?: string;
   };
+  consent?: ConsentRecord;
 }
 
 function sha256Hex(input: string): Promise<string> {
@@ -162,20 +165,27 @@ const GenerateProof: React.FC = () => {
     try {
       const session = await createDigiLockerRequest(activeWallet);
       setIdentityState(session);
-      // Only open consent window when consent is still pending.
       if (session.authUrl && session.status !== "identity_verified") {
+        window.localStorage.setItem(
+          "acre:digilocker-pending",
+          JSON.stringify({ requestId: session.requestId, walletAddress: activeWallet })
+        );
+        const isMock = session.authUrl.includes('mock-digilocker-consent');
         const popup = window.open(session.authUrl, "_blank", "noopener,noreferrer");
         if (!popup) {
           toast({
             title: "Popup Blocked",
-            description: "Please allow popups and open the DigiLocker consent window.",
+            description: "Please allow popups, or click the consent link shown below.",
+          });
+        } else {
+          toast({
+            title: "DigiLocker Session Created",
+            description: isMock
+              ? "Approve access in the consent window, then click Check Status."
+              : "Complete Aadhaar consent in the Setu window, then click Check Status.",
           });
         }
       }
-      toast({
-        title: "DigiLocker Started",
-        description: session.authUrl ? "Open the consent window and complete verification" : "Identity session created",
-      });
     } catch (err) {
       toast({
         title: "Identity Setup Failed",
@@ -190,6 +200,15 @@ const GenerateProof: React.FC = () => {
     if (!identityState?.requestId) return;
     setIdentityBusy(true);
     try {
+      // In mock mode: approve the session server-side before polling so one click does everything
+      const isMock = identityState.authUrl?.includes("mock-digilocker-consent");
+      if (isMock) {
+        await fetch(`${getBaseUrl()}/mock-digilocker-consent/approve`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ request_id: identityState.requestId }),
+        });
+      }
       const session = await pollDigiLockerStatus(identityState.requestId);
       setIdentityState(session);
       if (session.status === "identity_verified") {
@@ -285,6 +304,7 @@ const GenerateProof: React.FC = () => {
                 status: identityState.status,
                 flags: identityState.flags,
               },
+          consent: result.consent,
         };
         setProofData(realProofData);
       } catch (err) {

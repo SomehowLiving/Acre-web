@@ -21,6 +21,8 @@ export const DigiLockerConnection: React.FC<DigiLockerConnectionProps> = ({
 }) => {
   const status = identityState?.status || "idle";
   const verified = status === "identity_verified";
+  const pending = status === "pending_digilocker_consent";
+  const isMockMode = pending && !!identityState?.authUrl?.includes('mock-digilocker-consent');
 
   return (
     <div className="space-y-8">
@@ -48,17 +50,37 @@ export const DigiLockerConnection: React.FC<DigiLockerConnectionProps> = ({
           </div>
         </div>
 
+        {/* DigiLocker consent link — real Setu URL in prod, local mock page in sandbox */}
         {identityState?.authUrl && !verified && (
-          <motion.a
+          <motion.div
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
-            href={identityState.authUrl}
-            target="_blank"
-            rel="noreferrer"
-            className="block p-4 border border-primary/40 bg-primary/5 text-sm text-primary hover:bg-primary/10 transition-colors"
+            className="space-y-3"
           >
-            Open DigiLocker consent window
-          </motion.a>
+            <a
+              href={identityState.authUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="block p-4 border border-primary/40 bg-primary/5 text-sm text-primary hover:bg-primary/10 transition-colors"
+            >
+              {isMockMode ? "Open mock Aadhaar consent screen →" : "Open DigiLocker consent window →"}
+            </a>
+
+            {/* Mock mode info panel */}
+            {isMockMode && (
+              <div className="p-4 border border-yellow-500/40 bg-yellow-500/5 text-sm space-y-2">
+                <div className="font-heading text-xs tracking-wide text-yellow-500">MOCK MODE — SANDBOX ONLY</div>
+                <p className="text-muted-foreground text-xs">
+                  No real Setu credentials. Click the link above to open the local Aadhaar consent simulator,
+                  approve access, then click Check Status to extract mock claims.
+                </p>
+                <div className="font-mono text-xs text-muted-foreground space-y-0.5 pt-1">
+                  <div>request_id: {identityState?.requestId}</div>
+                  <div>aadhaar: XXXX-XXXX-4242 · DOB: 01-01-1998 · country: India</div>
+                </div>
+              </div>
+            )}
+          </motion.div>
         )}
 
         {identityState?.flags && (
@@ -68,7 +90,7 @@ export const DigiLockerConnection: React.FC<DigiLockerConnectionProps> = ({
               <div className="font-heading text-sm">{identityState.flags.isVerifiedHuman ? "TRUE" : "FALSE"}</div>
             </div>
             <div className="p-3 border border-border bg-muted/20">
-              <div className="text-xs text-muted-foreground mb-1">INDIAN</div>
+              <div className="text-xs text-muted-foreground mb-1">INDIAN CITIZEN</div>
               <div className="font-heading text-sm">{identityState.flags.isIndian ? "TRUE" : "FALSE"}</div>
             </div>
             <div className="p-3 border border-border bg-muted/20">
@@ -103,7 +125,7 @@ export const DigiLockerConnection: React.FC<DigiLockerConnectionProps> = ({
               disabled={busy}
               className="px-4 py-2 bg-primary text-primary-foreground font-heading text-sm disabled:opacity-50"
             >
-              {busy ? "Refreshing..." : "Check Status"}
+              {busy ? "Verifying..." : isMockMode ? "Simulate Approval" : "Check Status"}
             </button>
           )}
 

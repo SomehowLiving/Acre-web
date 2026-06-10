@@ -44,6 +44,8 @@ const Dashboard = () => {
   const creditLimit = profile ? Number(profile.creditLimit) : 0;
   const riderCount = profile ? Number(profile.riderCount) : 0;
   const riderRating = profile ? Number(profile.riderRating) : 0;
+  const score = profile ? Number(profile.score) : 0;
+  const monthlyEarnings = profile ? Number(profile.monthlyEarnings) : 0;
   const verified = profile?.verified;
   const platform = profile?.platform || "";
   const timestamp = profile?.timestamp || "";
@@ -114,17 +116,21 @@ const Dashboard = () => {
                 <span className="text-xs font-heading text-muted-foreground tracking-widest uppercase mb-3">Protocol Stats</span>
                 <div className="grid grid-cols-3 gap-6">
                   <div>
-                    <p className="text-2xl font-heading text-foreground mono-data">{proofCount.toLocaleString()}</p>
+                    <p className="text-2xl font-heading text-foreground mono-data">{Number(proofCount || 0).toLocaleString()}</p>
                     <span className="text-xs text-muted-foreground">Total Proofs</span>
                   </div>
                   <div>
-                    <p className="text-2xl font-heading text-secondary mono-data">{riderCount.toLocaleString()}</p>
-                    <span className="text-xs text-muted-foreground">Rider Count</span>
+                    <p className="text-2xl font-heading text-secondary mono-data">{score || "—"}</p>
+                    <span className="text-xs text-muted-foreground">Blue Score</span>
                   </div>
                   <div>
-                    <p className="text-2xl font-heading text-foreground mono-data">{riderRating ? (riderRating / 100).toFixed(2) : "—"}</p>
-                    <span className="text-xs text-muted-foreground">Rider Rating</span>
+                    <p className="text-2xl font-heading text-foreground mono-data">{monthlyEarnings ? `₹${Math.round(monthlyEarnings / 1000)}k` : "—"}</p>
+                    <span className="text-xs text-muted-foreground">Monthly Earnings</span>
                   </div>
+                </div>
+                <div className="mt-4 grid grid-cols-2 gap-4 text-xs text-muted-foreground">
+                  <span>Trips: <span className="font-heading text-foreground mono-data">{riderCount.toLocaleString()}</span></span>
+                  <span>Rating: <span className="font-heading text-foreground mono-data">{riderRating ? riderRating.toFixed(2) : "—"}</span></span>
                 </div>
               </div>
             </BentoCell>

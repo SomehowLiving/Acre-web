@@ -293,7 +293,7 @@ const PassportGoalsPage = () => {
                     label="On-Chain Record"
                     status={p?.identity?.identityBonded ? "verified" : "none"}
                     items={[
-                      "Algorand TestNet: App 758797725",
+                      "Algorand TestNet: App 764223486",
                       `Consent anchor: ${history?.verificationCount ? "on-chain" : "pending"}`,
                       `${history?.verificationCount ?? 0} verification(s) recorded`,
                       history?.returning ? "Returning user +20 pts" : "First verification",

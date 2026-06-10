@@ -16,6 +16,7 @@ import {
   type IdentityVerificationEnvelope,
   type VerifyResponse,
   type ConsentRecord,
+  type BlueScoreSignals,
 } from "@/lib/api";
 import { toast } from "@/hooks/use-toast";
 
@@ -42,6 +43,9 @@ export interface ProofData {
   // Real backend data
   tier?: number;
   creditLimit?: number;
+  score?: number;
+  blueScoreTier?: string;
+  signals?: BlueScoreSignals;
   txId?: string;
   identity?: {
     requestId: string;
@@ -287,6 +291,9 @@ const GenerateProof: React.FC = () => {
           proofHash: result.txId ? `0x${result.txId}` : animatedData.proofHash,
           tier: result.tier,
           creditLimit: result.creditLimit,
+          score: result.score,
+          blueScoreTier: result.blueScoreTier,
+          signals: result.signals,
           txId: result.txId,
           publicSignals: {
             ...animatedData.publicSignals,

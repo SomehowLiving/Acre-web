@@ -2,22 +2,24 @@ import { useEffect, useState } from "react";
 import DashboardSidebar from "@/components/dashboard/DashboardSidebar";
 import DashboardTopBar from "@/components/dashboard/DashboardTopBar";
 import { useWallet } from "@/contexts/WalletContext";
-import { fetchBlueScore, fetchCreditLimit, fetchEligibility, fetchUserProfile, type BlueScoreResponse, type AcreHistory, type UserProfile } from "@/lib/api";
+import { fetchBlueScore, type BlueScoreResponse, type AcreHistory } from "@/lib/api";
 
 const BlueScorePage = () => {
   const { account } = useWallet();
   const [data, setData] = useState<BlueScoreResponse | null>(null);
-  const [onchainCreditLimit, setOnchainCreditLimit] = useState(0);
-  const [onchainEligibility, setOnchainEligibility] = useState(0);
-  const [profile, setProfile] = useState<UserProfile | null>(null);
 
   useEffect(() => {
-    if (!account) return setData(null);
+    if (!account) {
+      setData(null);
+      return;
+    }
     fetchBlueScore(account).then(setData).catch(() => setData(null));
-    fetchCreditLimit(account).then(setOnchainCreditLimit).catch(() => setOnchainCreditLimit(0));
-    fetchEligibility(account).then(setOnchainEligibility).catch(() => setOnchainEligibility(0));
-    fetchUserProfile(account).then(setProfile).catch(() => setProfile(null));
   }, [account]);
+
+  const currentLimit = data?.creditLimit ?? data?.loanEligibility ?? 0;
+  const nextTier = data?.tier === "Blue Basic" ? "Blue Plus" : data?.tier === "Blue Plus" ? "Blue Prime" : null;
+  const nextThreshold = nextTier === "Blue Plus" ? 530 : nextTier === "Blue Prime" ? 700 : null;
+  const pointsToNext = nextThreshold == null ? 0 : Math.max(0, nextThreshold - (data?.score || 0));
 
   return (
     <div className="min-h-screen bg-background flex">
@@ -36,14 +38,16 @@ const BlueScorePage = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="p-3 border border-border bg-background/50">
                 <p className="text-xs text-muted-foreground uppercase">Current</p>
-                <p className="font-heading mt-1">Model eligibility: ₹{(data?.creditLimit ?? data?.loanEligibility ?? 0).toLocaleString("en-IN")}</p>
-                <p className="text-xs text-muted-foreground mt-0.5">Stored on-chain limit: ₹{(data?.onchain?.creditLimit ?? onchainCreditLimit).toLocaleString("en-IN")} · Trips: {Number((data?.onchain?.riderCount ?? profile?.riderCount) || 0).toLocaleString("en-IN")}</p>
+                <p className="font-heading mt-1">Verified eligibility: ₹{currentLimit.toLocaleString("en-IN")}</p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  On-chain score: {data?.onchain?.score || "—"} · Limit: ₹{(data?.onchain?.creditLimit ?? 0).toLocaleString("en-IN")} · Trips: {Number(data?.onchain?.riderCount || 0).toLocaleString("en-IN")}
+                </p>
               </div>
               <div className="p-3 border border-secondary/30 bg-secondary/5">
                 <p className="text-xs text-secondary uppercase">Next Milestone</p>
-                <p className="font-heading mt-1">Projected: ₹{Math.round((data?.creditLimit ?? data?.loanEligibility ?? onchainEligibility) * 1.4).toLocaleString("en-IN")} @ {data?.tier === "Blue Prime" ? "10–12" : "13–15"}% APR</p>
-                <p className="text-xs text-muted-foreground mt-0.5">Unlock at Blue Prime (700+)</p>
-                <p className="text-xs text-secondary mt-1">Need: +{Math.max(0, 700 - (data?.score || 0))} points from consistency/rating/activity gains</p>
+                <p className="font-heading mt-1">{nextTier ? `Unlock ${nextTier}` : "Maximum tier reached"}</p>
+                <p className="text-xs text-muted-foreground mt-0.5">{nextThreshold ? `Threshold: ${nextThreshold}+` : "Blue Prime active"}</p>
+                <p className="text-xs text-secondary mt-1">{nextTier ? `Need: +${pointsToNext} points from verified signal gains` : "No higher tier available"}</p>
               </div>
             </div>
           </section>
@@ -51,7 +55,7 @@ const BlueScorePage = () => {
           <section className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <Metric title="Score" value={String(data?.score ?? "—")} accent />
             <Metric title="Tier" value={data?.tier ?? "—"} />
-            <Metric title="Model Eligibility" value={`₹${(data?.loanEligibility ?? 0).toLocaleString("en-IN")}`} />
+            <Metric title="Verified Eligibility" value={`₹${currentLimit.toLocaleString("en-IN")}`} />
             <Metric title="Proof Freshness" value={`${data?.scoreFreshnessDays ?? "—"} days`} />
           </section>
 
@@ -90,13 +94,24 @@ const BlueScorePage = () => {
               />
             </div>
             {data?.signals?.source && (
-              <p className="text-xs text-muted-foreground mt-3">
-                Signal source: <span className="font-mono">{data.signals.source}</span>
-                {data.signals.source === "reclaim_proof" && " — from your submitted Reclaim proof"}
-                {data.signals.source === "onchain_derived" && " — derived from on-chain proof data"}
-                {data.signals.source === "deterministic_fallback" && " — deterministic from proof hash (no live Reclaim data yet)"}
-                {data.signals.source === "address_seed" && " — preview only, submit a proof to get your real score"}
-              </p>
+              <div className="text-xs text-muted-foreground mt-3 space-y-1">
+                <p>
+                  Signal source: <span className="font-mono">{data.signals.source}</span>
+                  {data.signals.source === "reclaim_proof" && " — from your submitted Reclaim proof"}
+                  {data.signals.source === "onchain_derived" && " — derived from on-chain proof data"}
+                  {data.signals.source === "deterministic_fallback" && " — deterministic from proof hash (no live Reclaim data yet)"}
+                  {data.signals.source === "address_seed" && " — preview only, submit a proof to get your real score"}
+                </p>
+                {data.canonicalSource && (
+                  <p>Canonical source: <span className="font-mono">{data.canonicalSource}</span></p>
+                )}
+                {(data.signals.monthlyTrips || data.signals.rupeesPerTrip) && (
+                  <p>
+                    Plausibility check: {data.signals.monthlyTrips ?? "—"} trips/month · ₹{data.signals.rupeesPerTrip ?? "—"}/trip
+                    {data.signals.plausibilityIssues?.length ? ` · adjusted ${data.signals.plausibilityIssues.length} signal(s)` : ""}
+                  </p>
+                )}
+              </div>
             )}
           </section>
 

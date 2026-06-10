@@ -2,15 +2,14 @@ import { useEffect, useState } from "react";
 import DashboardSidebar from "@/components/dashboard/DashboardSidebar";
 import DashboardTopBar from "@/components/dashboard/DashboardTopBar";
 import { useWallet } from "@/contexts/WalletContext";
-import { fetchBlueScore, fetchCreditLimit, fetchEligibility, simulateBlueScore, type BlueScoreResponse, type BlueScoreSimulationResponse } from "@/lib/api";
+import { fetchBlueScore, simulateBlueScore, type BlueScoreResponse, type BlueScoreSimulationResponse } from "@/lib/api";
 
-const activityToDays = (activity: "low" | "medium" | "high") =>
-  activity === "low" ? 10 : activity === "medium" ? 18 : 26;
+const activityToMonthlyTrips = (activity: "low" | "medium" | "high") =>
+  activity === "low" ? 120 : activity === "medium" ? 240 : 380;
 
-const tripsToActivity = (trips: number): "low" | "medium" | "high" => {
-  const days = trips / 15;
-  if (days >= 22) return "high";
-  if (days >= 14) return "medium";
+const monthlyTripsToActivity = (monthlyTrips: number): "low" | "medium" | "high" => {
+  if (monthlyTrips >= 320) return "high";
+  if (monthlyTrips >= 180) return "medium";
   return "low";
 };
 
@@ -23,8 +22,6 @@ const WhatIfSimulatorPage = () => {
   const [completionRate, setCompletionRate] = useState(88);
   const [result, setResult] = useState<BlueScoreSimulationResponse | null>(null);
   const [base, setBase] = useState<BlueScoreResponse | null>(null);
-  const [onchainCreditLimit, setOnchainCreditLimit] = useState(0);
-  const [onchainEligibility, setOnchainEligibility] = useState(0);
 
   useEffect(() => {
     if (!account) return setBase(null);
@@ -35,31 +32,30 @@ const WhatIfSimulatorPage = () => {
       setIncome(signals.earnings);
       setMonths(signals.tenure);
       setRating(signals.rating);
-      setActivity(tripsToActivity(signals.trips));
+      setActivity(monthlyTripsToActivity(signals.monthlyTrips ?? Math.round(signals.trips / Math.max(signals.tenure, 1))));
       setCompletionRate(signals.completionRate);
     }).catch(() => setBase(null));
-    fetchCreditLimit(account).then(setOnchainCreditLimit).catch(() => setOnchainCreditLimit(0));
-    fetchEligibility(account).then(setOnchainEligibility).catch(() => setOnchainEligibility(0));
   }, [account]);
 
-  const baselineLimit = onchainCreditLimit || base?.loanEligibility || onchainEligibility || 0;
+  const baselineLimit = base?.creditLimit || base?.loanEligibility || 0;
   const simulatedLimit = result?.loanEligibility || baselineLimit;
 
   useEffect(() => {
-    const activityDaysPerMonth = activityToDays(activity);
+    const monthlyTrips = activityToMonthlyTrips(activity);
     simulateBlueScore({
       monthlyIncome: income,
       consistencyMonths: months,
       rating,
-      activityDaysPerMonth,
+      activityDaysPerMonth: Math.round(monthlyTrips / 15),
+      monthlyTrips,
       completionRate,
-      currentCreditLimit: onchainCreditLimit,
+      currentCreditLimit: baselineLimit,
       currentScore: base?.score || 0,
       currentTier: base?.tier || "Blue Basic",
     })
       .then(setResult)
       .catch(() => setResult(null));
-  }, [income, months, rating, activity, completionRate, onchainCreditLimit, base?.score, base?.tier]);
+  }, [income, months, rating, activity, completionRate, baselineLimit, base?.score, base?.tier]);
 
   return (
     <div className="min-h-screen bg-background flex">

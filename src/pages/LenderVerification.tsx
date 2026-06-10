@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Copy, ExternalLink, ChevronDown, Search } from "lucide-react";
+import { Copy, ChevronDown, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ShieldProof, ProofValid, AlgorandChain } from "@/components/ProofMarks";
 import { useToast } from "@/hooks/use-toast";
@@ -223,25 +223,22 @@ const LenderVerification = () => {
               )}
             </div>
 
-            {/* Proof Hash */}
+            {/* On-chain Proof Hash */}
             <div className={`border border-border p-4 mb-6 transition-opacity duration-layout ease-acre ${isInvalid ? "opacity-30" : ""}`}>
-              <span className="text-xs text-muted-foreground tracking-widest uppercase block mb-2">Proof Hash</span>
+              <span className="text-xs text-muted-foreground tracking-widest uppercase block mb-2">On-Chain Proof Hash</span>
               <div className="flex items-center gap-2">
                 <code className="mono-data text-sm text-foreground break-all flex-1">
                   {proofHash || "—"}
                 </code>
                 {proofHash && (
-                  <>
-                    <button onClick={copyHash} className="text-muted-foreground hover:text-secondary acre-link transition-colors duration-micro ease-acre p-1">
-                      <Copy size={14} />
-                    </button>
-                    <a href={`https://testnet.algoexplorer.io/tx/${proofHash}`} target="_blank" rel="noopener noreferrer"
-                      className="text-muted-foreground hover:text-secondary transition-colors p-1">
-                      <ExternalLink size={14} />
-                    </a>
-                  </>
+                  <button onClick={copyHash} className="text-muted-foreground hover:text-secondary acre-link transition-colors duration-micro ease-acre p-1">
+                    <Copy size={14} />
+                  </button>
                 )}
               </div>
+              <p className="text-[10px] text-muted-foreground mt-2">
+                Read from Algorand local state via <span className="mono-data">get_proof_hash</span>; this is not a transaction ID.
+              </p>
             </div>
 
             {/* Cryptographic Details */}
@@ -293,7 +290,7 @@ const LenderVerification = () => {
 
               <DataRow label="RIDER RATING" lit={rowLit(4)} invalid={isInvalid}>
                 <span className="mono-data text-sm">
-                  {riderRating ? (riderRating / 100).toFixed(2) : "—"} / 5.00
+                  {riderRating ? riderRating.toFixed(2) : "—"} / 5.00
                 </span>
               </DataRow>
             </div>
@@ -391,6 +388,7 @@ const CryptoDetails = ({
             <div className="px-4 pb-4 space-y-3 border-t border-border pt-3">
               {[
                 ["Proof Hash", proofHash || "—"],
+                ["Proof Hash Source", "Algorand app local state"],
                 ["Platform", platform],
                 ["Attestation Time", ts],
                 ["Network", "Algorand Testnet"],

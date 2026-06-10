@@ -35,7 +35,7 @@ VITE_RECLAIM_APP_ID=
 VITE_RECLAIM_APP_SECRET=
 VITE_RECLAIM_PROVIDER_ID=
 VITE_BACKEND_VERIFY_URL=http://localhost:3001/verify-proof
-VITE_ALGORAND_APP_ID=
+VITE_ALGORAND_APP_ID=764223486
 VITE_ALGOD_SERVER=https://testnet-api.algonode.cloud
 # Optional
 VITE_ALGOD_TOKEN=
@@ -47,9 +47,9 @@ VITE_ALGOD_TOKEN=
 - Reclaim QR session flow for proof generation.
 - Opt-in check and opt-in transaction handling for Algorand app access.
 - Backend proof verification (`Reclaim.verifyProof`) + deterministic proof hashing.
-- On-chain write path via `verify_income` for tier/credit-limit attestation.
+- On-chain write path via `verify_income` for Blue Score, tier, credit-limit, proof-hash, and metric attestation.
 - Lender verification terminal for address-based eligibility checks.
-- Dashboard modules for proof status, profile, and protocol stats.
+- Dashboard modules for proof status, Blue Score, profile, protocol stats, growth goals, and lender verification.
 - Admin/verifier API support (including verifier rotation endpoint).
 
 ## How It Works (with diagram)
@@ -61,7 +61,7 @@ flowchart LR
   C --> D[Backend Verifier /verify-proof]
   D --> E[Verify Signature + Hash Proof]
   E --> F[Algorand Contract verify_income]
-  F --> G[On-chain Profile: verified, tier, creditLimit, proofHash]
+  F --> G[On-chain Profile: score, tier, creditLimit, proofHash]
   H[Lender /verify] --> I[Backend Read APIs]
   I --> G
 ```
@@ -139,7 +139,7 @@ acre-web/
 | `VITE_RECLAIM_APP_SECRET` | Yes | Reclaim secret |
 | `VITE_RECLAIM_PROVIDER_ID` | Yes | Reclaim provider ID |
 | `VITE_BACKEND_VERIFY_URL` | Yes | Backend verify endpoint |
-| `VITE_ALGORAND_APP_ID` | Yes | Target Algorand app ID |
+| `VITE_ALGORAND_APP_ID` | Yes | Target Algorand app ID (`764223486` on TestNet) |
 | `VITE_ALGOD_SERVER` | Yes | Algod RPC URL |
 | `VITE_ALGOD_TOKEN` | No | Algod token (if required) |
 
@@ -167,6 +167,10 @@ Used by frontend (`VITE_BACKEND_VERIFY_URL` base):
 - `GET /api/user/:address/credit-limit`
 - `GET /api/user/:address/full-profile`
 - `GET /api/user/:address/proof-hash`
+- `GET /api/blue-score/:address`
+- `GET /api/passport/:address`
+- `GET /api/growth/:address`
+- `GET /api/user/:address/history`
 - `POST /api/update-verifier`
 
 ## Contributing + License

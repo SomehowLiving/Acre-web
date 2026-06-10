@@ -122,7 +122,7 @@ function exportAuditJSON(portfolio: ReturnType<typeof portfolioFromScore>, baseS
   const record = {
     exported_at: new Date().toISOString(),
     platform: "ACRE — Privacy-Preserving Underwriting Framework",
-    blockchain: "Algorand TestNet (App ID: 758797725)",
+    blockchain: "Algorand TestNet (App ID: 764223486)",
     compliance_frameworks: ["DPDP Act 2023", "RBI Digital Lending Directions 2025"],
     portfolio_summary: {
       total_assessed: portfolio.total,

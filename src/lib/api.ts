@@ -17,8 +17,15 @@ export interface ConsentRecord {
 export interface VerifyResponse {
   success: boolean;
   tier: number;
+  contractTier?: number;
   creditLimit: number;
   txId: string;
+  score?: number;
+  blueScoreTier?: "Blue Prime" | "Blue Plus" | "Blue Basic";
+  apr?: string;
+  reason?: string;
+  signals?: BlueScoreSignals;
+  breakdown?: BlueScoreResponse["breakdown"];
   message?: string;
   identity?: IdentityVerificationEnvelope;
   consent?: ConsentRecord;
@@ -65,12 +72,26 @@ export interface VerifyWorkerProfilePayload {
 
 export interface UserProfile {
   verified: boolean;
-  tier: string;
-  creditLimit: string;
-  timestamp: string;
-  riderCount: string;
-  riderRating: string;
+  tier: number;
+  creditLimit: number;
+  timestamp: number;
+  riderCount: number;
+  riderRating: number;
   platform: string;
+  score: number;
+  buckets: number;
+  bucketBreakdown?: {
+    incomeBucket: number;
+    tenureBucket: number;
+    completionBucket: number;
+    ratingBucket: number;
+  };
+  source?: string;
+  plausibilityFlags: number;
+  monthlyEarnings: number;
+  tenureMonths: number;
+  completionRate: number;
+  completionRateRaw?: number;
 }
 
 export interface BlueScoreBreakdownFactor {
@@ -86,7 +107,11 @@ export interface BlueScoreSignals {
   earnings: number;
   tenure: number;
   completionRate: number;
-  source: "reclaim_proof" | "onchain_derived" | "deterministic_fallback" | "address_seed";
+  monthlyTrips?: number;
+  rupeesPerTrip?: number;
+  plausibilityIssues?: string[];
+  syntheticProfile?: string;
+  source: "reclaim_proof" | "reclaim" | "fallback" | "onchain_derived" | "deterministic_fallback" | "address_seed";
 }
 
 export interface AcreHistory {
@@ -101,6 +126,7 @@ export interface AcreHistory {
 export interface BlueScoreResponse {
   success: boolean;
   address: string;
+  canonicalSource?: "onchain_profile" | "preview_seed";
   verifiedKyc: boolean;
   score: number;
   tier: "Blue Prime" | "Blue Plus" | "Blue Basic" | "No Tier";
@@ -126,6 +152,13 @@ export interface BlueScoreResponse {
     tier: number;
     riderCount: number;
     riderRating: number;
+    score: number;
+    buckets: number;
+    source: string;
+    plausibilityFlags: number;
+    monthlyEarnings: number;
+    tenureMonths: number;
+    completionRate: number;
   };
   message: string;
 }
@@ -427,6 +460,7 @@ export async function simulateBlueScore(payload: {
   consistencyMonths: number;
   rating: number;
   activityDaysPerMonth: number;
+  monthlyTrips?: number;
   completionRate?: number;
   currentCreditLimit?: number;
   currentScore?: number;

@@ -70,8 +70,28 @@ export const ProofPreview: React.FC<ProofPreviewProps> = ({
     points.activity[simActivity];
 
   const resolveTier = (score: number) => (score >= 700 ? "Blue Prime" : score >= 530 ? "Blue Plus" : "Blue Basic");
-  const simulatedLoanLimit = simulatedScore >= 700 ? 50000 : simulatedScore >= 530 ? 35000 : 18000;
-  const baseLoanLimit = baseScore >= 700 ? 50000 : baseScore >= 530 ? 35000 : 18000;
+  const previewIncome = {
+    lt20: 15_000,
+    "20to40": 30_000,
+    gt40: 60_000,
+  } as const;
+  const previewLimit = (score: number, monthlyEarnings: number) => {
+    const tier = resolveTier(score);
+    const config =
+      tier === "Blue Prime"
+        ? { multiplier: 1.2, cap: 100_000, apr: 0.12 }
+        : tier === "Blue Plus"
+          ? { multiplier: 0.7, cap: 50_000, apr: 0.15 }
+          : { multiplier: 0.35, cap: 18_000, apr: 0.18 };
+    const incomeLimit = monthlyEarnings * config.multiplier;
+    if (incomeLimit < 1000) return 0;
+    const monthlyRate = config.apr / 12;
+    const dtiLimit = monthlyEarnings * 0.4 * ((1 - Math.pow(1 + monthlyRate, -12)) / monthlyRate);
+    const finalLimit = Math.min(incomeLimit, dtiLimit, config.cap);
+    return finalLimit < 5000 ? 0 : Math.floor(finalLimit / 1000) * 1000;
+  };
+  const simulatedLoanLimit = previewLimit(simulatedScore, previewIncome[simIncome]);
+  const baseLoanLimit = proofData.creditLimit ?? previewLimit(baseScore, previewIncome[baseIncomeBucket]);
 
   useEffect(() => {
     const maybeAddress = proofData.walletAddress;

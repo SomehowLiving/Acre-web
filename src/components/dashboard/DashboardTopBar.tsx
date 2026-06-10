@@ -28,7 +28,7 @@ const DashboardTopBar = () => {
         </div>
         <div className="w-[1px] h-4 bg-border" />
         <span className="text-xs text-muted-foreground mono-data">
-          Round #34,291,048
+          App #{import.meta.env.VITE_ALGORAND_APP_ID || "—"}
         </span>
       </div>
 

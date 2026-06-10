@@ -1,12 +1,34 @@
 import type { ProofPayload } from "./reclaim";
 
+export interface ConsentRecord {
+  token: string | null;
+  claimHash: string;
+  userPubkey: string;
+  enterprisePubkey: string;
+  expiresAt: number;
+  attestationSignature: string | null;
+  noteAnchor: {
+    txId: string | null;
+    explorerUrl: string | null;
+    error: string | null;
+  };
+}
+
 export interface VerifyResponse {
   success: boolean;
   tier: number;
+  contractTier?: number;
   creditLimit: number;
   txId: string;
+  score?: number;
+  blueScoreTier?: "Blue Prime" | "Blue Plus" | "Blue Basic";
+  apr?: string;
+  reason?: string;
+  signals?: BlueScoreSignals;
+  breakdown?: BlueScoreResponse["breakdown"];
   message?: string;
   identity?: IdentityVerificationEnvelope;
+  consent?: ConsentRecord;
 }
 
 export interface IdentityFlags {
@@ -50,39 +72,78 @@ export interface VerifyWorkerProfilePayload {
 
 export interface UserProfile {
   verified: boolean;
-  tier: string;
-  creditLimit: string;
-  timestamp: string;
-  riderCount: string;
-  riderRating: string;
+  tier: number;
+  creditLimit: number;
+  timestamp: number;
+  riderCount: number;
+  riderRating: number;
   platform: string;
+  score: number;
+  buckets: number;
+  bucketBreakdown?: {
+    incomeBucket: number;
+    tenureBucket: number;
+    completionBucket: number;
+    ratingBucket: number;
+  };
+  source?: string;
+  plausibilityFlags: number;
+  monthlyEarnings: number;
+  tenureMonths: number;
+  completionRate: number;
+  completionRateRaw?: number;
 }
 
 export interface BlueScoreBreakdownFactor {
-  bucket: string;
-  points: number;
+  value: number;
+  normalized: number;
+  weight: number;
+  contribution: number;
+}
+
+export interface BlueScoreSignals {
+  trips: number;
+  rating: number;
+  earnings: number;
+  tenure: number;
+  completionRate: number;
+  monthlyTrips?: number;
+  rupeesPerTrip?: number;
+  plausibilityIssues?: string[];
+  syntheticProfile?: string;
+  source: "reclaim_proof" | "reclaim" | "fallback" | "onchain_derived" | "deterministic_fallback" | "address_seed";
+}
+
+export interface AcreHistory {
+  verificationCount: number;
+  acreMonths: number;
+  returning: boolean;
+  daysSinceLastVerification: number | null;
+  firstVerificationDate: string | null;
+  lastVerificationDate: string | null;
 }
 
 export interface BlueScoreResponse {
   success: boolean;
   address: string;
+  canonicalSource?: "onchain_profile" | "preview_seed";
   verifiedKyc: boolean;
   score: number;
   tier: "Blue Prime" | "Blue Plus" | "Blue Basic" | "No Tier";
+  contractTier?: number;
   loanEligibility: number;
+  creditLimit?: number;
+  apr?: string;
   breakdown: {
-    income: BlueScoreBreakdownFactor;
-    consistency: BlueScoreBreakdownFactor;
-    rating: BlueScoreBreakdownFactor;
-    activity: BlueScoreBreakdownFactor;
+    earnings:    BlueScoreBreakdownFactor;
+    tenure:      BlueScoreBreakdownFactor;
+    rating:      BlueScoreBreakdownFactor;
+    activity:    BlueScoreBreakdownFactor;
+    reliability: BlueScoreBreakdownFactor;
   };
-  features: {
-    monthlyIncome: number;
-    consistencyMonths: number;
-    rating: number;
-    activityLevel: "low" | "medium" | "high";
-  };
-  scoreFreshnessDays: number;
+  signals?: BlueScoreSignals;
+  history?: AcreHistory;
+  scoreFreshnessDays: number | null;
   proofExpiresInDays: number;
   onchain?: {
     creditLimit: number;
@@ -91,6 +152,13 @@ export interface BlueScoreResponse {
     tier: number;
     riderCount: number;
     riderRating: number;
+    score: number;
+    buckets: number;
+    source: string;
+    plausibilityFlags: number;
+    monthlyEarnings: number;
+    tenureMonths: number;
+    completionRate: number;
   };
   message: string;
 }
@@ -101,7 +169,7 @@ export interface BlueScoreSimulationResponse {
   score: number;
   tier: "Blue Prime" | "Blue Plus" | "Blue Basic" | "No Tier";
   loanEligibility: number;
-  apr?: string | null;
+  apr?: string;
   breakdown: BlueScoreResponse["breakdown"];
   coachingMessage: string;
   disclaimer: string;
@@ -121,6 +189,7 @@ export interface PassportResponse {
       score: number;
       tier: "Blue Prime" | "Blue Plus" | "Blue Basic";
       breakdown: BlueScoreResponse["breakdown"];
+      signals?: BlueScoreSignals;
     };
     finance?: {
       currentCreditLimit: number;
@@ -134,6 +203,9 @@ export interface PassportResponse {
       reputationUpdateCadence: string;
       incomeProofExpiryDays: number;
     };
+    history?: AcreHistory;
+    pointsToNextTier?: number;
+    nextTierLabel?: string | null;
   };
   pipeline: string[];
   journey?: Array<{
@@ -149,24 +221,40 @@ export interface PassportResponse {
   reliability?: string;
 }
 
+export interface GrowthQuest {
+  id: string;
+  title: string;
+  description: string;
+  progressMonths: number;
+  targetMonths: number;
+  reward: string;
+  pointsGap: number;
+}
+
 export interface GrowthResponse {
   success: boolean;
   address: string;
+  currentScore?: number;
+  currentTier?: string;
+  nextTierLabel?: string | null;
+  pointsToNextTier?: number;
+  scoreDeltas?: {
+    earnings: number;
+    rating: number;
+    tenure: number;
+    completion: number;
+    trips: number;
+    reputationBonus: number;
+  };
   skills: string[];
   recommendations: string[];
-  quests: Array<{
-    id: string;
-    title: string;
-    progressMonths: number;
-    targetMonths: number;
-    reward: string;
-  }>;
+  quests: GrowthQuest[];
 }
 
 const BACKEND_VERIFY_URL =
   (import.meta.env.VITE_BACKEND_VERIFY_URL as string) || "https://lushier-rosalia-superearthly.ngrok-free.dev/verify-proof";
 
-function getBaseUrl(): string {
+export function getBaseUrl(): string {
   return BACKEND_VERIFY_URL.replace(/\/(verify-proof|verify-worker-profile)\/?$/, "");
 }
 
@@ -372,6 +460,8 @@ export async function simulateBlueScore(payload: {
   consistencyMonths: number;
   rating: number;
   activityDaysPerMonth: number;
+  monthlyTrips?: number;
+  completionRate?: number;
   currentCreditLimit?: number;
   currentScore?: number;
   currentTier?: string;
@@ -401,4 +491,21 @@ export async function fetchGrowth(address: string): Promise<GrowthResponse> {
   const body = await res.json().catch(() => ({ message: "Invalid JSON response from backend" }));
   if (!res.ok || !body.success) throw new Error(body.message || "Failed to fetch growth recommendations");
   return body as GrowthResponse;
+}
+
+export interface ChatMessage {
+  role: "user" | "assistant";
+  content: string;
+}
+
+export async function fetchAcreChat(messages: ChatMessage[]): Promise<string> {
+  const base = getBaseUrl();
+  const res = await fetch(`${base}/api/chat`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ messages }),
+  });
+  const body = await res.json().catch(() => ({ message: "Invalid response from AI service" }));
+  if (!res.ok || !body.success) throw new Error(body.message || "AI service unavailable");
+  return body.reply as string;
 }

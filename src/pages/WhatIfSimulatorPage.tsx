@@ -2,7 +2,16 @@ import { useEffect, useState } from "react";
 import DashboardSidebar from "@/components/dashboard/DashboardSidebar";
 import DashboardTopBar from "@/components/dashboard/DashboardTopBar";
 import { useWallet } from "@/contexts/WalletContext";
-import { fetchBlueScore, fetchCreditLimit, fetchEligibility, fetchUserProfile, simulateBlueScore, type BlueScoreResponse, type BlueScoreSimulationResponse, type UserProfile } from "@/lib/api";
+import { fetchBlueScore, simulateBlueScore, type BlueScoreResponse, type BlueScoreSimulationResponse } from "@/lib/api";
+
+const activityToMonthlyTrips = (activity: "low" | "medium" | "high") =>
+  activity === "low" ? 120 : activity === "medium" ? 240 : 380;
+
+const monthlyTripsToActivity = (monthlyTrips: number): "low" | "medium" | "high" => {
+  if (monthlyTrips >= 320) return "high";
+  if (monthlyTrips >= 180) return "medium";
+  return "low";
+};
 
 const WhatIfSimulatorPage = () => {
   const { account } = useWallet();
@@ -10,44 +19,43 @@ const WhatIfSimulatorPage = () => {
   const [months, setMonths] = useState(4);
   const [rating, setRating] = useState(4.4);
   const [activity, setActivity] = useState<"low" | "medium" | "high">("medium");
+  const [completionRate, setCompletionRate] = useState(88);
   const [result, setResult] = useState<BlueScoreSimulationResponse | null>(null);
   const [base, setBase] = useState<BlueScoreResponse | null>(null);
-  const [onchainCreditLimit, setOnchainCreditLimit] = useState(0);
-  const [onchainEligibility, setOnchainEligibility] = useState(0);
-  const [profile, setProfile] = useState<UserProfile | null>(null);
 
   useEffect(() => {
     if (!account) return setBase(null);
     fetchBlueScore(account).then((b) => {
       setBase(b);
-      setIncome(b.features.monthlyIncome);
-      setMonths(b.features.consistencyMonths);
-      setRating(b.features.rating);
-      setActivity(b.features.activityLevel);
+      const signals = b.signals;
+      if (!signals) return;
+      setIncome(signals.earnings);
+      setMonths(signals.tenure);
+      setRating(signals.rating);
+      setActivity(monthlyTripsToActivity(signals.monthlyTrips ?? Math.round(signals.trips / Math.max(signals.tenure, 1))));
+      setCompletionRate(signals.completionRate);
     }).catch(() => setBase(null));
-    fetchCreditLimit(account).then(setOnchainCreditLimit).catch(() => setOnchainCreditLimit(0));
-    fetchEligibility(account).then(setOnchainEligibility).catch(() => setOnchainEligibility(0));
-    fetchUserProfile(account).then(setProfile).catch(() => setProfile(null));
   }, [account]);
 
-  const ratingFactor = Math.max(0, (Number(profile?.riderRating || 0) / 100 - 4.0) * 0.12);
-  const activityFactor = Math.min(0.2, Number(profile?.riderCount || 0) / 10000);
-  const simulatedLimit = Math.round(onchainCreditLimit * (1 + ratingFactor + activityFactor + ((result?.score || 0) - (base?.score || 0)) / 2000));
+  const baselineLimit = base?.creditLimit || base?.loanEligibility || 0;
+  const simulatedLimit = result?.loanEligibility || baselineLimit;
 
   useEffect(() => {
-    const activityDaysPerMonth = activity === "low" ? 10 : activity === "medium" ? 18 : 26;
+    const monthlyTrips = activityToMonthlyTrips(activity);
     simulateBlueScore({
       monthlyIncome: income,
       consistencyMonths: months,
       rating,
-      activityDaysPerMonth,
-      currentCreditLimit: onchainCreditLimit,
+      activityDaysPerMonth: Math.round(monthlyTrips / 15),
+      monthlyTrips,
+      completionRate,
+      currentCreditLimit: baselineLimit,
       currentScore: base?.score || 0,
       currentTier: base?.tier || "Blue Basic",
     })
       .then(setResult)
       .catch(() => setResult(null));
-  }, [income, months, rating, activity, base?.score, base?.tier]);
+  }, [income, months, rating, activity, completionRate, baselineLimit, base?.score, base?.tier]);
 
   return (
     <div className="min-h-screen bg-background flex">
@@ -71,6 +79,9 @@ const WhatIfSimulatorPage = () => {
               <Range label="Platform Rating" value={rating.toFixed(1)}>
                 <input type="range" min={3.5} max={5} step={0.1} value={rating} onChange={(e) => setRating(Number(e.target.value))} className="w-full" />
               </Range>
+              <Range label="Completion Rate" value={`${completionRate}%`}>
+                <input type="range" min={70} max={100} step={1} value={completionRate} onChange={(e) => setCompletionRate(Number(e.target.value))} className="w-full" />
+              </Range>
               <div>
                 <p className="text-sm mb-1">Work Frequency</p>
                 <select value={activity} onChange={(e) => setActivity(e.target.value as "low" | "medium" | "high")} className="w-full border border-border bg-background p-2 text-sm">
@@ -83,7 +94,7 @@ const WhatIfSimulatorPage = () => {
               <p className="text-xs uppercase tracking-widest text-muted-foreground">Simulation Output</p>
               <p className="text-3xl font-heading text-secondary">{result?.score ?? "—"}</p>
               <p className="text-sm">Tier: <span className="font-heading">{result?.tier ?? "—"}</span></p>
-              <p className="text-sm">Estimated eligibility: <span className="font-heading">₹{(simulatedLimit || result?.loanEligibility || 0).toLocaleString("en-IN")}</span></p>
+              <p className="text-sm">Estimated eligibility: <span className="font-heading">₹{simulatedLimit.toLocaleString("en-IN")}</span></p>
               <div className="p-3 border border-secondary/30 bg-secondary/5 text-sm text-secondary">{result?.coachingMessage ?? "Adjust inputs to preview outcomes."}</div>
               <p className="text-xs text-muted-foreground">{result?.disclaimer ?? "Simulation preview only."}</p>
             </section>
@@ -93,13 +104,13 @@ const WhatIfSimulatorPage = () => {
             <div className="p-5 border border-border bg-card">
               <p className="text-xs uppercase tracking-widest text-muted-foreground mb-3">Before / After</p>
               <p className="text-sm">Current score: <span className="font-heading">{base?.score ?? "—"}</span> → Simulated: <span className="font-heading text-secondary">{result?.score ?? "—"}</span></p>
-              <p className="text-sm mt-1">Current limit: ₹{onchainCreditLimit.toLocaleString("en-IN")} (on-chain) → Simulated: ₹{(simulatedLimit || onchainEligibility).toLocaleString("en-IN")}</p>
-              <p className="text-xs text-muted-foreground mt-1">Formula uses on-chain limit + rating factor + work-volume factor + score delta.</p>
+              <p className="text-sm mt-1">Current limit: ₹{baselineLimit.toLocaleString("en-IN")} → Simulated: ₹{simulatedLimit.toLocaleString("en-IN")}</p>
+              <p className="text-xs text-muted-foreground mt-1">Simulation uses the same server-side Blue Score and tier-limit policy as the dashboard.</p>
             </div>
             <div className="p-5 border border-secondary/30 bg-secondary/5">
               <p className="text-xs uppercase tracking-widest text-secondary mb-3">Next Milestone</p>
-              <p className="text-sm font-heading">Unlock ₹35,000 instead of ₹20,000</p>
-              <p className="text-xs text-muted-foreground mt-1">Action: maintain 5 more work days/month and consistency above 6 months.</p>
+              <p className="text-sm font-heading">Blue Plus at 530 · Blue Prime at 700</p>
+              <p className="text-xs text-muted-foreground mt-1">Raise weak signals together: income, tenure, rating, work frequency, and completion rate.</p>
             </div>
           </section>
         </main>

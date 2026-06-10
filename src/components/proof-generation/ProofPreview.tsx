@@ -4,6 +4,7 @@ import { ProofValid, ShieldProof, AlgorandChain } from "@/components/ProofMarks"
 import type { ProofData } from "@/pages/GenerateProof";
 import { toast } from "@/hooks/use-toast";
 import { fetchGrowth, fetchPassport, type GrowthResponse, type PassportResponse } from "@/lib/api";
+import type { ConsentRecord } from "@/lib/api";
 
 interface ProofPreviewProps {
   proofData: ProofData;
@@ -68,9 +69,29 @@ export const ProofPreview: React.FC<ProofPreviewProps> = ({
     points.rating[simRating] +
     points.activity[simActivity];
 
-  const resolveTier = (score: number) => (score >= 800 ? "Blue Prime" : score >= 650 ? "Blue Plus" : "Blue Basic");
-  const simulatedLoanLimit = simulatedScore >= 800 ? 50000 : simulatedScore >= 650 ? 35000 : 20000;
-  const baseLoanLimit = baseScore >= 800 ? 50000 : baseScore >= 650 ? 35000 : 20000;
+  const resolveTier = (score: number) => (score >= 700 ? "Blue Prime" : score >= 530 ? "Blue Plus" : "Blue Basic");
+  const previewIncome = {
+    lt20: 15_000,
+    "20to40": 30_000,
+    gt40: 60_000,
+  } as const;
+  const previewLimit = (score: number, monthlyEarnings: number) => {
+    const tier = resolveTier(score);
+    const config =
+      tier === "Blue Prime"
+        ? { multiplier: 1.2, cap: 100_000, apr: 0.12 }
+        : tier === "Blue Plus"
+          ? { multiplier: 0.7, cap: 50_000, apr: 0.15 }
+          : { multiplier: 0.35, cap: 18_000, apr: 0.18 };
+    const incomeLimit = monthlyEarnings * config.multiplier;
+    if (incomeLimit < 1000) return 0;
+    const monthlyRate = config.apr / 12;
+    const dtiLimit = monthlyEarnings * 0.4 * ((1 - Math.pow(1 + monthlyRate, -12)) / monthlyRate);
+    const finalLimit = Math.min(incomeLimit, dtiLimit, config.cap);
+    return finalLimit < 5000 ? 0 : Math.floor(finalLimit / 1000) * 1000;
+  };
+  const simulatedLoanLimit = previewLimit(simulatedScore, previewIncome[simIncome]);
+  const baseLoanLimit = proofData.creditLimit ?? previewLimit(baseScore, previewIncome[baseIncomeBucket]);
 
   useEffect(() => {
     const maybeAddress = proofData.walletAddress;
@@ -190,6 +211,100 @@ export const ProofPreview: React.FC<ProofPreviewProps> = ({
             <div>
               <div className="text-xs text-muted-foreground mb-1">ALGOPLONK MODE</div>
               <div className="font-heading">{proofData.identity.algoplonkMode || "n/a"}</div>
+            </div>
+          </div>
+        </motion.div>
+      )}
+
+      {/* Consent Token + Note Anchor + Ed25519 Attestation */}
+      {proofData.consent && (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="p-6 border border-secondary/40 bg-secondary/5 space-y-4"
+        >
+          <div className="flex items-center gap-2 mb-2">
+            <ShieldProof size={18} state="success" />
+            <span className="font-heading text-sm tracking-wide text-secondary">CONSENT RECORD</span>
+          </div>
+
+          {/* Consent Token */}
+          {proofData.consent.token && (
+            <div>
+              <div className="text-xs text-muted-foreground mb-1">CONSENT TOKEN (HMAC-SHA256)</div>
+              <div className="flex items-center gap-2">
+                <div className="font-mono text-xs bg-muted/30 p-2 break-all flex-1 text-foreground/80">
+                  {proofData.consent.token.slice(0, 40)}…
+                </div>
+                <button
+                  onClick={() => copyToClipboard(proofData.consent!.token!, "Consent token")}
+                  className="text-xs text-muted-foreground hover:text-foreground shrink-0"
+                >
+                  [COPY]
+                </button>
+              </div>
+              <div className="text-xs text-muted-foreground mt-1">
+                Expires: {new Date((proofData.consent.expiresAt ?? 0) * 1000).toLocaleDateString("en-IN")} · Lender-verifiable offline
+              </div>
+            </div>
+          )}
+
+          {/* Ed25519 Attestation Signature */}
+          {proofData.consent.attestationSignature && (
+            <div>
+              <div className="text-xs text-muted-foreground mb-1">ED25519 ATTESTATION</div>
+              <div className="flex items-center gap-2">
+                <div className="font-mono text-xs bg-muted/30 p-2 break-all flex-1 text-foreground/80">
+                  {proofData.consent.attestationSignature.slice(0, 32)}…
+                </div>
+                <button
+                  onClick={() => copyToClipboard(proofData.consent!.attestationSignature!, "Attestation")}
+                  className="text-xs text-muted-foreground hover:text-foreground shrink-0"
+                >
+                  [COPY]
+                </button>
+              </div>
+              <div className="text-xs text-muted-foreground mt-1">
+                Signs: claim_hash + user_pubkey + enterprise_pubkey + expiry
+              </div>
+            </div>
+          )}
+
+          {/* Note Anchor */}
+          <div>
+            <div className="text-xs text-muted-foreground mb-1">NOTE ANCHOR (ON-CHAIN AUDIT TRAIL)</div>
+            {proofData.consent.noteAnchor.txId ? (
+              <div className="flex items-center gap-2">
+                <a
+                  href={proofData.consent.noteAnchor.explorerUrl ?? "#"}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-mono text-xs text-primary hover:underline break-all"
+                >
+                  {proofData.consent.noteAnchor.txId.slice(0, 20)}…
+                </a>
+                <button
+                  onClick={() => copyToClipboard(proofData.consent!.noteAnchor.txId!, "Note anchor tx")}
+                  className="text-xs text-muted-foreground hover:text-foreground shrink-0"
+                >
+                  [COPY]
+                </button>
+              </div>
+            ) : (
+              <div className="font-mono text-xs text-muted-foreground">
+                {proofData.consent.noteAnchor.error || "Unavailable — VERIFIER_MNEMONIC not configured"}
+              </div>
+            )}
+            <div className="text-xs text-muted-foreground mt-1">
+              0-algo self-payment · consent JSON in tx note · permanent explorer-queryable record
+            </div>
+          </div>
+
+          {/* Claim Hash */}
+          <div>
+            <div className="text-xs text-muted-foreground mb-1">CLAIM HASH</div>
+            <div className="font-mono text-xs bg-muted/30 p-2 break-all text-foreground/80">
+              {proofData.consent.claimHash}
             </div>
           </div>
         </motion.div>
@@ -520,11 +635,19 @@ export const ProofPreview: React.FC<ProofPreviewProps> = ({
         </button>
 
         {isSubmitted ? (
-          <div className="flex items-center gap-3 px-6 py-2 bg-secondary/10 border border-secondary/30">
-            <AlgorandChain size={18} state="success" />
-            <span className="font-heading text-sm tracking-wider text-secondary">
-              ANCHORED TO CHAIN
-            </span>
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 px-6 py-2 bg-secondary/10 border border-secondary/30">
+              <AlgorandChain size={18} state="success" />
+              <span className="font-heading text-sm tracking-wider text-secondary">
+                ANCHORED TO CHAIN
+              </span>
+            </div>
+            <a
+              href="/dashboard"
+              className="px-6 py-2 font-heading text-sm tracking-wider bg-primary text-primary-foreground hover:bg-primary/90 transition-all flex items-center gap-2"
+            >
+              <span>VIEW DASHBOARD</span>
+            </a>
           </div>
         ) : (
           <a

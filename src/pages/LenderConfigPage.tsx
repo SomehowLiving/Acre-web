@@ -38,9 +38,11 @@ const LenderConfigPage = () => {
       setProfileTrips(0);
     });
     fetchBlueScore(account).then((blue) => {
-      setMinIncome(Math.max(15000, Math.min(60000, Math.round(blue.features.monthlyIncome * 0.8))));
-      setMinMonths(Math.max(1, Math.min(12, blue.features.consistencyMonths)));
-      setMinRating(Math.max(3.5, Math.min(5, blue.features.rating)));
+      const signals = blue.signals;
+      if (!signals) return;
+      setMinIncome(Math.max(15000, Math.min(60000, Math.round(signals.earnings * 0.8))));
+      setMinMonths(Math.max(1, Math.min(12, signals.tenure)));
+      setMinRating(Math.max(3.5, Math.min(5, signals.rating)));
     }).catch(() => {});
   }, [account]);
 
